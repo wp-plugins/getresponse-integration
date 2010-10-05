@@ -32,12 +32,11 @@ link the last number after the ?id= code id you web from id.
 
 == Changelog ==
 
-= v1.0 =
-
-* Inital release.
-
 = v1.1 =
 
 * Added possiblity to use Wordpress styles,
 * Added integration with new WebForms.
 
+= v1.0 =
+
+* Inital release.
