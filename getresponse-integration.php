@@ -2,7 +2,7 @@
 /*
 Plugin Name: GetResponse Integration Plugin
 Description: This plugin will add configurable GetResponse form to add contacts from your site. 
-Version: 1.1
+Version: 1.1.1
 Author: Kacper Rowiński, Grzegorz Struczyński
 License: GPL2
 */
@@ -24,7 +24,8 @@ License: GPL2
 */
 
 /*  Changelog:
-
+1.1.1
+	- Fixed integration with new WebForms,
 1.1 - Added possiblity to use Wordpress styles,
     - Added integration with new WebForms.
 */
