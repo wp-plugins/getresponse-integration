@@ -1,13 +1,10 @@
 <?php
 /*
-Plugin Name: GetResponse Integration Plugin
-Description: This plugin will add configurable GetResponse form to add contacts from your site. 
-Version: 1.1.1
-Author: Kacper Rowiński, Grzegorz Struczyński
+Plugin Name: GetResponse Plugin
+Description: This plugin will add GetResponse WebForm to your site. 
+Version: 1.2.0
+Author: Kacper Rowiński, Grzegorz Struczyński, Sylwester Okrój
 License: GPL2
-*/
-
-/*  Copyright 2010 Kacper Rowiński  (email : krowinski@implix.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as 
@@ -23,32 +20,17 @@ License: GPL2
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/*  Changelog:
-1.1.1
-	- Fixed integration with new WebForms,
-1.1 - Added possiblity to use Wordpress styles,
-    - Added integration with new WebForms.
-*/
 class Gr_Integration
-{
-    // plugin db prefix
+{	
+	/**
+	 * URL
+	 **/
+	var $GETRESPONSE_URL = 'http://getresponse.com/view_webform.js';
+	var $GETRESPONSE_URL_CURL = 'http://app.getresponse.com/add_contact_webform.html';		
+	var $GETRESPONSE_URL_FEED = 'http://blog.getresponse.com/feed';
+	
+	// plugin db prefix
     var $GrOptionDbPrefix = 'GrIntegrationOptions_';
-    
-    // default values for widget
-    var $GrDefaultWidgetOptions = array
-    (
-        'title' => 'Subscribe Form',
-    	'buttonText' => 'Subscribe',
-        'subscriberEmailText' => 'Email',
-    	'subscriberNameText' => 'Name',
-        'confirmation_url' => '',
-        'error_url'	=> '',
-        'campaign_name' => '',
-        'custom_ref' => '',
-        'show_counter' => 'no',
-        'hide_name' => 'no',
-        'customs' => array(), 
-    );
     
 	/**
 	 * Constructor
@@ -66,23 +48,27 @@ class Gr_Integration
 		    add_action('wp_footer', array(&$this, 'ShowPopup'));
 		}
 		
-        load_plugin_textdomain( 'getresponse-integration-i18n', str_replace(ABSPATH , '' , dirname(__FILE__) . '/mo' ) );
-	    
-        // add js
-	    wp_enqueue_script( 
-	    	'gr_script', 
-	        get_bloginfo('wpurl') . '/wp-content/plugins/getresponse-integration/js/getresponse-integration.js', 
-	        array('jquery', 'jquery-form')
-	    ); 
-	    
-	    // add cs
+        load_plugin_textdomain( 'getresponse-i18n', str_replace(ABSPATH , '' , dirname(__FILE__) . '/mo' ) );
+
+	    // add css
 	    wp_enqueue_style(
 	    	'gr_style', 
-	    	get_bloginfo('wpurl') . '/wp-content/plugins/getresponse-integration/css/getresponse-integration.css'
+	    	get_bloginfo('wpurl') . '/wp-content/plugins/getresponse-integration/getresponse-integration.css'
 	    );
 	    
-		// init widgets
-		add_action('init', array(&$this, 'WidgetRegister'));
+	    add_action('admin_menu', 'my_plugin_menu');
+	    
+     	// dodawanie funkcji komentarza
+        if ( get_option($this->GrOptionDbPrefix . 'comment_on') AND
+        		is_numeric(get_option($this->GrOptionDbPrefix . 'new_web_from_id'))
+        	)
+        {        	
+           	add_action('comment_form',array(&$this,'AddCheckboxToComment'));
+          	add_action('comment_post',array(&$this,'GrabEmailFromComment'));          	
+        }
+        
+        add_action('init', array(&$this, 'WidgetRegister'));
+
     }
     
 	/**
@@ -91,11 +77,12 @@ class Gr_Integration
     function Init()
     {
 	     add_options_page(
-            __('GetResponse', 'Gr_Integration'),
-            __('GetResponse', 'Gr_Integration'), 
-    		'manage_options',
-            __FILE__,
-            array(&$this, 'AdminOptionsPage')
+	     				 __('GetResponse', 'Gr_Integration'),  
+	     				 __('GetResponse', 'Gr_Integration'), 
+	     		 		'manage_options', 
+	     				 __FILE__,
+	     				array(&$this, 'AdminOptionsPage'
+	     				)
 	    );
     }
     
@@ -132,92 +119,161 @@ class Gr_Integration
 	 */
 	function AdminOptionsPage() 
 	{
-	    if ( isset($_POST['web_from_id']) or isset($_POST['new_web_from_id']) and isset($_POST['style_id']))
+	    if ( isset($_POST['new_web_from_id']) and 
+	    	 isset($_POST['style_id']) and 
+	    	 isset($_POST['comment_on']) and 
+	    	 isset($_POST['comment_label']) )
 	    {
-	        update_option($this->GrOptionDbPrefix . 'web_from_id', $_POST['web_from_id']);
+	    	if ( is_numeric($_POST['new_web_from_id']) OR empty($_POST['new_web_from_id']) ) 
+	    	{	
                 update_option($this->GrOptionDbPrefix . 'new_web_from_id', $_POST['new_web_from_id']);
                 update_option($this->GrOptionDbPrefix . 'style_id', $_POST['style_id']);
-			?>
-				<div id="message" class="updated fade">
-					<p><strong><?php _e('Settings saved', 'Gr_Integration'); ?></strong></p>
-				</div>
-			<?php
+                update_option($this->GrOptionDbPrefix . 'comment_on', $_POST['comment_on']);
+                update_option($this->GrOptionDbPrefix . 'comment_label', $_POST['comment_label']);                
+                update_option($this->GrOptionDbPrefix . 'DEBUG', 'save option ok');            
+				?>
+					<div id="message" class="updated fade">
+						<p><strong><?php _e('Settings saved', 'Gr_Integration'); ?></strong></p>
+					</div>
+				<?php
+	    	}
+	    	else {
+	    		?>
+		    		<div id="message" class="error fade">
+		    			<p><strong><?php _e('Settings error', 'Gr_Integration'); ?></strong> - You must enter an integer to <i>Web from id</i> input or leave empty to disable.</p>
+		    		</div>
+	    		<?php
+	    		update_option($this->GrOptionDbPrefix . 'DEBUG', 'save option error');
+	    	}
 	    }
 
-	    ?>
-		<div class="wrap">
+		?>
+		<!-- CONFIG BOX -->
+			<div class="GR_config_box">
+				<table class="wp-list-table widefat">
+					<thead>
+						<tr>
+							<th>GetResponse Config</th>
+						</tr>
+					</thead>
+					<tbody id="the-list">
+						<tr class="active" id="">
+							<td class="desc">
+								<form method="post"
+									action="<?php echo admin_url( 'options-general.php?page=' . $this->PluginName() ); ?>">
+											
+									<h3>
+										<?php _e('Subscribe via Web Form', 'Gr_Integration'); ?>
+									</h3>
+									<label class="GR_label" for="new_web_from_id"><?php _e('Web form ID:', 'Gr_Integration'); ?>
+									</label> <input class="GR_input" type="text"
+										name="new_web_from_id"
+										value="<?php echo get_option($this->GrOptionDbPrefix . 'new_web_from_id') ?>" />
+									(leave empty to disable)
+			
+									<?php
+									if (get_option($this->GrOptionDbPrefix . 'style_id') == 1)
+									{
+										$webform = "selected";
+									}
+									else
+									{
+										$wordpress = "selected";
+									}
+									?>
+									<br /> <label class="GR_label" for="style_id">Style:</label> <select
+										class="GR_select" name="style_id">
+										<option value="1" <?php echo $webform;?>>Web Form</option>
+										<option value="0" <?php echo $wordpress;?>>Wordpress</option>
+									</select>
+			
+									<h3>
+										<?php _e('Subscribe via Comment', 'Gr_Integration'); ?>
+									</h3>
+									<?php
+									if (get_option($this->GrOptionDbPrefix . 'comment_on') == 1)
+									{
+										$on = "selected";
+									}
+									else
+									{
+										$off = "selected";
+									}
+									?>
+									<label class="GR_label" for="comment_on"><?php _e('Comment integration:', 'Gr_Integration'); ?>
+									</label> <select class="GR_select2" name="comment_on">
+										<option value="1" <?php echo $on;?>>On</option>
+										<option value="0" <?php echo $off;?>>Off</option>
+									</select> (allow subscriptions when visitors comment) <br /> <label
+										class="GR_label" for="comment_label"><?php _e('Additional text:', 'Gr_Integration'); ?>
+									</label> <input class="GR_input2" type="text" name="comment_label"
+										value="<?php echo get_option($this->GrOptionDbPrefix . 'comment_label', 'Sign up to our newsletter!') ?>" />
+			
+									<h3>Where is my web form ID?</h3>
+									<p>You'll find your web form ID right in your GetResponse account. Go to Web Forms => Web forms list and click on the "Source" link in a selected web form. Your web form ID is the number you'll see right after the "?wid=" portion of the JavaScript code. </p>
+									<div class="GR_img_webform_id"></div>	
+			
+									<p class="submit">
+										<input type="submit" name="Submit"
+											value="<?php _e('Save', 'Gr_Integration'); ?>"
+											class="button-primary" />
+									</p>
+								</form>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			
+		<!-- RSS BOX -->	
+			<div class="GR_rss_box">
+				<table class="wp-list-table widefat">
+					<thead>
+						<tr>
+							<th>GetResponse RSS</th>
+						</tr>
+					</thead>
+					<tbody id="the-list2">
+						<tr class="active" id="">
+							<td class="desc">
+						<?php $this->GrRss(); ?>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+		<!-- SOCIAL BOX -->	
+			<br />
+				
+				<table class="wp-list-table widefat">
+					<thead>
+						<tr>
+							<th>GetResponse Social</th>
+						</tr>
+					</thead>
+					<tbody id="the-list2">
+						<tr class="active" id="">
+							<td class="desc">
+				              <ul>
+				                <li>
+				                  <a class="GR_ico sprite facebook-ico" href="http://www.facebook.com/getresponse" target="_blank" title="Facebook">Facebook</a>
+				                </li>
+				                <li>
+				                  <a class="GR_ico sprite twitter-ico" href="http://twitter.com/getresponse" target="_blank" title="Twitter">Twitter</a>
+				                </li>
+				                <li>
+				                  <a class="GR_ico sprite linkedin-ico" href="http://www.linkedin.com/company/implix" target="_blank" title="LinkedIn">LinkedIn</a>
+				                </li>
+				                <li>
+				                  <a class="GR_ico sprite blog-ico" href="http://blog.getresponse.com/" target="_blank" title="Blog">Blog</a>
+				                </li>
+				              </ul>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		
-    		<h2><?php _e('GetResponse Options', 'Gr_Integration'); ?></h2>
-    		
-    		<h3><?php _e('Sidebar Widget', 'Gr_Integration'); ?></h3>
-    		<p>
-    	        <?php printf(__('The GetResponse widget(s) are available on <a href="%s">widgets management page</a>.', 'Gr_Integration'), admin_url('widgets.php')); ?>
-    		</p>
-    		
-    		<h3><?php _e('LightBox options*', 'Gr_Integration'); ?></h3>
-        	<p>
-        		<form method="post" action="<?php echo admin_url( 'options-general.php?page=' . $this->PluginName() ); ?>">
-                	<table class="form-table">
-        				<tr valign="top">
-                			<th scope="row">
-                				<label for="web_from_id"><?php _e('Web from id:', 'Gr_Integration'); ?>&#160</label>
-                			</th>
-                			<td>
-                				<input type="text" name="web_from_id" value="<?php echo get_option($this->GrOptionDbPrefix . 'web_from_id') ?>"/> 
-                				<?php _e('(leave empty to disable)', 'Gr_Integration'); ?>
-                			</td>
-                		</tr>
-                		<tr>
-                			<td colspan="2">
-        						<p>
-        							<?php _e('Web form id and more lightbox options can be configured on your GetResponse', 'Gr_Integration'); ?>
-        							<a href="http://www.getresponse.com/create_webform.html"><?php _e('account', 'Gr_Integration'); ?></a> 
-        							<?php _e('( login requierd )', 'Gr_Integration'); ?> 
-        						</p>
-                                                        <h5><?php _e('*(Option is only available for webforms created before September 1st)', 'Gr_Integration'); ?></h5>
-        				</td>
-                                </tr>  
-                	</table>
-                        <p>
-                           <h3><?php _e('New WebForm', 'Gr_Integration'); ?></h3>
-                           <label for="new_web_from_id"><?php _e('Web from id:', 'Gr_Integration'); ?>&#160</label>
-                           <input type="text" name="new_web_from_id" value="<?php echo get_option($this->GrOptionDbPrefix . 'new_web_from_id') ?>"/>
-
-                           <?php
-                            if (get_option($this->GrOptionDbPrefix . 'style_id') == 1)
-                            {
-                            $webform = "selected";
-                            }
-                            else
-                            {
-                            $wordpress = "selected";
-                            }
-                           ?>
-
-                            <select name="style_id">
-        			<option value="1" name="webform" <?php echo $webform;?> >Use Webform styles </option>
-        			<option value="0" name="wordpress" <?php echo $wordpress;?> >Use Wordpress styles </option>
-                           </select>
-        		</p>
-                        
-                	<p class="submit">
-                		<input type="submit" name="Submit" value="<?php _e('Save', 'Gr_Integration'); ?>" class="button-primary" />
-                	</p>
-        		</form>
-    		</p>
-
-		</div>
-		<?php
-	}
-	
-    /**
-     * Gr light box popup
-     */
-	function ShowPopup() 
-	{
-		$id = get_option($this->GrOptionDbPrefix . 'web_from_id');
-		if ( empty($id) ) return;
-		echo '<script type="text/javascript" src="http://www.getresponse.com/display_webform.js?wid='. $id .'"><!--empty--></script>';
+<?php
 	}
         
 	/**
@@ -225,374 +281,148 @@ class Gr_Integration
 	 */
 	function WidgetRegister()
 	{	    
-		$widget_options = get_option( $this->GrOptionDbPrefix . 'widget' );
-
-                if (empty($widget_options))
-                {
-                    $widget_options[1] = $this->GrDefaultWidgetOptions;
-                }
-
-                $check_form = get_option($this->GrOptionDbPrefix . 'new_web_from_id');
-                if ( empty($check_form) )
-                {
-                    $display = 'DisplaySidebarWidget';
-                }
-                elseif(!empty($check_form))
-                {
-                    $display = 'DisplaySidebar2Widget';
-                }
-
-		$name = __( 'GetResponse Subscription Form', 'Gr_Integration' );
-		$prefix = 'getresponse-widget';
-	
-		foreach ( array_keys($widget_options) as $widget_number ) 
+		$check = get_option($this->GrOptionDbPrefix . 'new_web_from_id');
+		if (!empty($check))
 		{
-			wp_register_sidebar_widget(
-			    $prefix . '-' . $widget_number, 
-			    $name, 
-			    array( &$this, $display ),
-			    array( 
-			    	'classname' => 'widget_getresponse', 
-			    	'description' => __( 'Add GetResponse widget subscription form to your site.', 'Gr_Integration' ),
-			    ),
-			    array( 'number' => $widget_number )
-			);
+			$display = 'DisplaySidebarWidget';
+		}
+		else {
+			$display = 'DisplaySidebarWidgetEmpty';
+		}
 
-			wp_register_widget_control(
-			    $prefix . '-' . $widget_number, 
-			    $name,
-			    array( &$this, 'WidgetControl' ),
-			    array( 'width' => 200, 'height' => 400, 'id_base' => $prefix ),
-			    array( 'number' => $widget_number )
-            );
-		}               
+		wp_register_sidebar_widget( 'getresponse-widget',
+									__( 'GetResponse WebForm', 'Gr_Integration' ),
+									array( &$this, $display ),
+									array( 'description' => ' ' )
+									);
+             
 	}
 
-        function DisplaySidebar2Widget()
-        {
+	function DisplaySidebarWidget()
+	{
         $form .= '<P>';
         $new_id = get_option($this->GrOptionDbPrefix . 'new_web_from_id');
         $style_id = get_option($this->GrOptionDbPrefix . 'style_id');
 
         if($style_id == 0)
         {
-        $form .= '<script type="text/javascript" src=http://www.getresponse.com/view_webform.js?wid='. $new_id .'&css=1"></script>';
+        	$form .= '<script type="text/javascript" src="' .$this->GETRESPONSE_URL. '?wid='. $new_id .'&css=1"></script>';
         }
         elseif($style_id == 1)
         {
-        $form .= '<script type="text/javascript" src="http://www.getresponse.com/view_webform.js?wid='. $new_id .'"></script>';
+        	$form .= '<script type="text/javascript" src="' .$this->GETRESPONSE_URL. '?wid='. $new_id .'"></script>';
         }
         $form .= '</P>';
         echo $form;
-        }
-	/**
-	 * Display the widget on page
-	 */
-	function DisplaySidebarWidget( $args, $widget_args = null ) 
-	{
-	    $number = isset($widget_args['number']) ? $widget_args['number'] : null;
-	    
-		$options = get_option( $this->GrOptionDbPrefix . 'widget' );
-		// no options don't show form
-		if ( empty($options[$number]) )
-		{
-			return;
-		}
-		
-		// GR Form, generate form from given options
-                
-		$form .= '<div id="GRform">';
-       	$form .= '<form accept-charset="utf-8" action="http://www.getresponse.com/cgi-bin/add.cgi">';
-        $form .= '<input type="hidden" name="custom_http_referer" id="custom_http_referer" value="'. $_SERVER['REQUEST_URI'] .'"/>';
-        
-        if ( strlen($options[$number]['confirmation_url']) > 0 )
-        {
-            $form .= '<input type="hidden" name="confirmation_url" id="confirmation_url" value="' . $options[$number]['confirmation_url'] . '" />';
-        }
-
-        if ( strlen($options[$number]['error_url']) > 0 )
-        {
-            $form .= '<input type="hidden" name="error_url" id="error_url" value="'. $options[$number]['error_url'] .'" />';
-        }
-        
-        if ( strlen($options[$number]['campaign_name']) > 0 )
-        {
-            $form .= '<input type="hidden" name="campaign_name" id="campaign_name" value="'. $options[$number]['campaign_name'] .'" />';
-        }
-
-        if ( strlen($options[$number]['custom_ref']) > 0 )
-        {
-            $form .= '<input type="hidden" name="custom_ref" id="custom_ref" value="' . $options[$number]['custom_ref'] . '" />';
-        }       
-        
-        if ( strlen($options[$number]['title']) > 0 )
-        {
-            $form .= '<h2 class="widgettitle GRf-title">' . $options[$number]['title'] . '</h2>';
-        }
-				
-        
-        if ( 'yes' === $options[$number]['hide_name'] )
-        {
-            $form .= '<div style="display:none;">';
-            $form .= '<label for="subscriber_name">'. $options[$number]['subscriberNameText'] .'</label>';
-            $form .= '<input id="subscriber_name" name="subscriber_name" type="text" value="Friend"/>';
-            $form .= '</div>';
-        }
-        else
-        {
-            $form .= '<div class="GRf-row">';
-            $form .= '<label for="subscriber_name">'. $options[$number]['subscriberNameText'] .'</label>';
-            $form .= '<input id="subscriber_name" name="subscriber_name" type="text" value=""/>';
-            $form .= '</div>';
-        }
-	    
-        $form .= '<div class="GRf-row">';
-        $form .= '<label for="subscriber_email">'. $options[$number]['subscriberEmailText'] .'</label>';
-        $form .= '<input id="subscriber_email" name="subscriber_email" type="text" value=""/>';
-        $form .= '</div>';		
-
-        // customs form hadnler
-            if ( isset($options[$number]['customs']) and is_array($options[$number]['customs']) and count($options[$number]['customs']) > 0 )
-	    {
-	        foreach ( $options[$number]['customs'] as $values )
-	        {
-	            if ( isset($values['hidden']) )
-	            {
-                    $form .= '<input type="hidden" name="custom_'. $values['name'] .'" id="'. $values['name'] . '" value="' . (empty($values['value']) ? '' : $values['value']) . '" />';
-	            }
-	            else
-	            {
-                    $form .= '<div class="GRf-row">';
-                    $form .= '<label for="'. $values['name'] .'">'. $values['name'] . '</label>';
-                    $form .= '<input id="'. $values['name'] .'" name="custom_'. $values['name'] .'" type="text" value="' . (empty($values['value']) ? '' : $values['value']) . '"/>';
-                    $form .= '</div>';
-	            }
-	        }
-	    }    		    
-        
-        $form .= '<div class="GRf-hCnt">';
-        $form .= '<input type="submit" class="GRfh-In" value="'. $options[$number]['buttonText'] .'" />';
-        $form .= '</div>';
-
-        $form .= '<div class="GRf-info">';
-        $form .= 'GetResponse <a href="http://www.getresponse.com/" title="Email Marketing">Email Marketing</a>';
-        $form .= '</div>';
-
-        $form .= '</form>';        		      
- 
-	if ( 'yes' === $options[$number]['show_counter'] )
-        {
-            $form .= '<div>';
-            $form .= '<script type="text/javascript" src="http://www.getresponse.com/display_subscribers_count.js?campaign_name='. $options[$number]['campaign_name'] .'"><!--empty--></script>';           
-            $form .= '</div>';
-
-        }
-
-        echo $form;
-
 	}
 	
-	/**
-	 * Widget configuration panel
-	 */
-	function WidgetControl( $args = null )
-	{    
-		$number = 0;
-		if ( isset($args['number']) and is_numeric($args['number']) )
-		{
-		    $number = $args['number'];
+	function DisplaySidebarWidgetEmpty()
+	{
+		echo 'No Webform.';
+	}
+	
+	function AddCheckboxToComment()
+	{
+		if (!is_user_logged_in() ) {
+		?>
+		<p>
+        <input class="GR_checkbox" value="1" id="comment_checkbox" type="checkbox" name="comment_checkbox"/>
+            <label for="comment_checkbox">
+            <?php echo get_option($this->GrOptionDbPrefix . 'comment_label');?>
+            </label>
+        </p>
+        <br />		
+		<?php
 		}
-		
-		// get widget options
-        $widget_options = get_option( $this->GrOptionDbPrefix . 'widget' );
-                
-        // post data handling
-		if ( isset($_POST['sidebar']) and isset($_POST['widget_getresponse']) and is_array($_POST['widget_getresponse']) ) 
+	}
+	
+	function GrabEmailFromComment()
+	{
+		if ( $_POST['comment_checkbox'] == 1 AND isset($_POST['email']) )
+		{	
+			$webform_id = get_option($this->GrOptionDbPrefix . 'new_web_from_id');			
+			$this->getresponse_curl_contact( $_POST['author'], $_POST['email'], $webform_id, 'GET');
+			$this->getresponse_curl_contact( $_POST['author'], $_POST['email'], $webform_id, 'POST');
+		}
+		else {
+			update_option($this->GrOptionDbPrefix . 'DEBUG', 'last sending subscription error');
+		}
+	}
+	
+	function GrRss() {
+		// numbers of feeds:
+		$num = 10;
+
+		include_once(ABSPATH . WPINC . '/feed.php');
+		$rss = fetch_feed( $this->GETRESPONSE_URL_FEED );
+
+		if ( is_wp_error($rss) ) {
+			echo 'No rss items, feed might be broken.';
+		}
+		else
 		{
-		    foreach ( $_POST['widget_getresponse'] as $widget_number => $values ) 
-			{
-			    foreach ( $values as $name => $value )
-			    {
-			        // check if post name is a correct one
-			        if ( isset($this->GrDefaultWidgetOptions[$name]) )
-			        {
-                        $widget_options[$widget_number][$name] = $value;
-			        }
-			        // customs handler
-			        elseif( true == preg_match('/custom_/',$name) and is_array($value)  ) 
-			        {
-			            // remove unused customs
-			            unset($widget_options[$widget_number]['customs'][$name]);
-			            
-			            // only add custom if name have added rest is optional
-			            if ( '' != $value['name'] )
-			            {
-			                $widget_options[$widget_number]['customs'][$name] = $value;  
-			            }
-			        }
-			    }
+			$rss_items = $rss->get_items( 0, $rss->get_item_quantity( $num ) );
+
+			// If the feed was erroneously
+			if ( !$rss_items ) {
+				$md5 = md5( $this->GETRESPONSE_URL_FEED );
+				delete_transient( 'feed_' . $md5 );
+				delete_transient( 'feed_mod_' . $md5 );
+				$rss = fetch_feed( $this->GETRESPONSE_URL_FEED );
+				$rss_items = $rss->get_items( 0, $rss->get_item_quantity( $num ) );
 			}
 
-			// update widget options in db
-			update_option($this->GrOptionDbPrefix . 'widget', $widget_options);
+			$content = '<ul class="GR_rss_ul">';
+			if ( !$rss_items ) {
+				$content .= '<li class="GR_rss_li">No rss items, feed might be broken.</li>';
+			} else {
+				foreach ( $rss_items as $item ) {
+					$url = preg_replace( '/#.*/', '', esc_url( $item->get_permalink(), $protocolls=null, 'display' ) );
+					$content .= '<li class="GR_rss_li">';
+					$content .= '<a class="GR_rss_a" href="'.$url.'" target="_blank">'. esc_html( $item->get_title() ) .'</a> ';
+					$content .= '</li>';
+				}
+			}
+			$content .= '</ul>';
+
+			echo $content;
 		}
-				
-	    // $number - is dynamic number for multi widget, gived by WP
-    	// by default $number = -1 (if no widgets activated). In this case we should use %i% for inputs
-    	// to allow WP generate number automatically
-    	$number = $args['number'] == -1 ? '%i%' : $args['number'];
-		
-    	// load def values if don't exists
-	    if (empty($widget_options[$number]))
+	}
+	
+	// curl
+	function getresponse_curl_contact( $name, $email, $webform_id, $method='GET')
+	{
+		if ( function_exists( 'curl_init' ) )
 		{
-		    $widget_options[$number] = $this->GrDefaultWidgetOptions;
+			$str_url = 'type=ajax';
+			$str_url .= '&name=' . urlencode($name);
+			$str_url .= '&email=' . urlencode($email);
+			$str_url .= '&webform_id=' . $webform_id;
+			$str_url .= '&submit=Sign%20Up!';
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_AUTOREFERER, 1);
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+			curl_setopt($ch, CURLOPT_HEADER, 0 );
+			if ($method == 'POST')
+			{
+				curl_setopt($ch, CURLOPT_POST, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $str_url);
+				curl_setopt($ch, CURLOPT_URL, $this->GETRESPONSE_URL_CURL);
+			}
+			else {
+				curl_setopt($ch, CURLOPT_POST, 0);
+				curl_setopt($ch, CURLOPT_URL, $this->GETRESPONSE_URL_CURL . '?' . $str_url );
+			}
+			$output = curl_exec($ch);
+			curl_close($ch);
+			return true;
 		}
-		
-		// gr form options
-    	?>
-    		<p>
-    		    <?php _e('This widget allows you to add an <a href="http://www.getresponse.com/" target="_blank">GetResponse</a> Web Subscription Form to your site.', 'Gr_Integration'); ?>
-    		</p>
-    		    		
-    		<h3>
-    		    <?php _e('GetResponse Options', 'Gr_Integration'); ?>
-    		</h3>
-
-    		<?php _e('<b>Title</b> (Optional)', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(eg. Subscribe)', 'Gr_Integration'); ?>
-    		<br />
-				<input name="widget_getresponse[<?php echo $number; ?>][title]" type="text" value="<?php echo attribute_escape($widget_options[$number]['title']); ?>" />
-			<br />		
-    		<br />
-    		
-    		<?php _e('<b>Button Text</b> (Optional)', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(eg. Subscribe)', 'Gr_Integration'); ?>
-    		<br />
-				<input name="widget_getresponse[<?php echo $number; ?>][buttonText]" type="text" value="<?php echo attribute_escape($widget_options[$number]['buttonText']); ?>" />
-			<br />		
-    		<br />    		
-    		
-    		<?php _e('<b>Email Text</b> (Optional)', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(eg. Email)', 'Gr_Integration'); ?>
-    		<br />
-				<input name="widget_getresponse[<?php echo $number; ?>][subscriberEmailText]" type="text" value="<?php echo attribute_escape($widget_options[$number]['subscriberEmailText']); ?>" />
-			<br />		
-    		<br />     		
-    		
-    		<?php _e('<b>Name Text</b> (Optional)', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(eg. Your Name)', 'Gr_Integration'); ?>
-    		<br />
-				<input name="widget_getresponse[<?php echo $number; ?>][subscriberNameText]" type="text" value="<?php echo attribute_escape($widget_options[$number]['subscriberNameText']); ?>" />
-			<br />		
-    		<br />  
-    		
-    		<?php _e('<b>Confirmation URL</b> (Optional)', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(eg. http://example.com/greetings.html)', 'Gr_Integration'); ?>
-    		<br />
-				<input name="widget_getresponse[<?php echo $number; ?>][confirmation_url]" type="text" value="<?php echo attribute_escape($widget_options[$number]['confirmation_url']); ?>" />
-			<br />		
-    		<br /> 
-
-    		<?php _e('<b>Error URL</b> (Optional)', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(eg. http://example.com/error.html)', 'Gr_Integration'); ?>
-    		<br />
-				<input name="widget_getresponse[<?php echo $number; ?>][error_url]" type="text" value="<?php echo attribute_escape($widget_options[$number]['error_url']); ?>" />
-			<br />		
-    		<br /> 
-
-    		<?php _e('<b>Your Getresponse Campaign Name</b> (Required)', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(eg. best_campaign)', 'Gr_Integration'); ?>
-    		<br />
-				<input name="widget_getresponse[<?php echo $number; ?>][campaign_name]" type="text" value="<?php echo attribute_escape($widget_options[$number]['campaign_name']); ?>" />
-			<br />		
-    		<br /> 
-    		
-    		<?php _e('<b>Ref Custom</b> (Optional)', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(eg. 555, ref)', 'Gr_Integration'); ?>
-    		<br />
-				<input name="widget_getresponse[<?php echo $number; ?>][custom_ref]" type="text" value="<?php echo attribute_escape($widget_options[$number]['custom_ref']); ?>" />
-			<br />		
-    		<br /> 
-
-    		<h3>
-    		    <?php _e('Customs', 'Gr_Integration'); ?>
-    		</h3>
-
-    		<?php
-    		    // handle existing customs
-    		    if ( isset($widget_options[$number]['customs']) and is_array($widget_options[$number]['customs']) and count($widget_options[$number]['customs']) > 0 )
-    		    {
-    		        foreach ( $widget_options[$number]['customs'] as $custom_id => $values )
-    		        {
-    		            ?>
-                		<div>
-                    		<br />
-                				<?php _e('Name:', 'Gr_Integration'); ?><input style="width: 60%;" name="widget_getresponse[<?php echo $number; ?>][<?php echo $custom_id; ?>][name]" id="name" type="text" value="<?php echo $values['name']; ?>" />
-                			<br />
-                				<?php _e('Value:', 'Gr_Integration'); ?><input style="width: 60%;" name="widget_getresponse[<?php echo $number; ?>][<?php echo $custom_id; ?>][value]" id="value" type="text" value="<?php echo $values['value']; ?>" />	
-                    		<br />
-                    			<?php _e('Hide:', 'Gr_Integration'); ?><input style="width: 60%;" name="widget_getresponse[<?php echo $number; ?>][<?php echo $custom_id; ?>][hidden]" id="hidden" type="checkbox" value="on" <?php echo !empty($values['hidden']) ? 'checked=checked' : null; ?>"/>	
-                			<span style="cursor:pointer;" onclick="RemoveExistingCustom(this);"><u><?php _e('<b>Remove</b>', 'Gr_Integration'); ?></u></span>	
-                			<br />
-                			<br />
-                		</div> 
-                		<?php 
-    		        }
-    		        ?>
-                		<p><?php _e('(Remember to save!)', 'Gr_Integration'); ?></p>
-            		<?php
-    		    }
-    		?>
-
-    		<span style="cursor:pointer;" onclick="ShowHide('add_customs_<?php echo $number; ?>');"><u><?php _e('<b>Add custom(s)</b>', 'Gr_Integration'); ?></u></span>
-    		<br />
-    		<br />
-    		<div>    		
-    			<?php $id = time();  ?>
-        		<div class="to_clone_<?php echo $number; ?>" id="add_customs_<?php echo $number; ?>" style="display: none;">
-            		<br />
-        				<?php _e('Name:', 'Gr_Integration'); ?><input style="width: 60%;" name="widget_getresponse[<?php echo $number; ?>][custom_<?php echo $id; ?>][name]" id="name" type="text" value="" />
-        			<br />
-        				<?php _e('Value:', 'Gr_Integration'); ?><input style="width: 60%;" name="widget_getresponse[<?php echo $number; ?>][custom_<?php echo $id; ?>][value]" id="value" type="text" value="" />	
-            		<br />
-            			<?php _e('Hide:', 'Gr_Integration'); ?><input style="width: 60%;" name="widget_getresponse[<?php echo $number; ?>][custom_<?php echo $id; ?>][hidden]" id="hidden" type="checkbox" value="on" />	
-        				<a style="cursor:pointer;" onclick="AddCustom('to_clone_<?php echo $number; ?>');">[+]</a>
-        				<a id="remove_custom" style="display: none; cursor:pointer;" onclick="RemoveCustom('to_clone_<?php echo $number; ?>');">[-]</a>
-        			<br />
-        			<br />
-        		</div> 
-    		</div>
-    		
-    		<?php _e('<b>Show Contacts Counter</b>', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(Yes, No)', 'Gr_Integration'); ?>
-    		<br />
-    			<select name="widget_getresponse[<?php echo $number; ?>][show_counter]">
-        			<option value="yes" <?php echo $widget_options[$number]['show_counter'] == 'yes' ? 'selected=selected' : null; ?> >yes</option>
-        			<option value="no" <?php echo $widget_options[$number]['show_counter'] == 'no' ? 'selected=selected' : null; ?> >no</option>
-    			</select>
-			<br />		
-    		<br />
-
-    		<?php _e('<b>Hide Name Input</b> All contacts will be added with name Friend', 'Gr_Integration'); ?>
-    		<br />
-    		<?php _e('(Yes, No)', 'Gr_Integration'); ?>
-    		<br />
-    			<select name="widget_getresponse[<?php echo $number; ?>][hide_name]">
-        			<option value="yes" <?php echo $widget_options[$number]['hide_name'] == 'yes' ? 'selected=selected' : null; ?> >yes</option>
-        			<option value="no" <?php echo $widget_options[$number]['hide_name'] == 'no' ? 'selected=selected' : null; ?> >no</option>
-    			</select>
-			<br />		
-    		<br />
-    	<?php
+		else {
+			return false;
+		}
 	}
 }
 

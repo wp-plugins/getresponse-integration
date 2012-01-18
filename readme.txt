@@ -1,46 +1,40 @@
-=== GetResponse Integration ===
-Contributors: Kacper Rowiński, Grzegorz Struczyński
-Tags: getresponse, email, newsletter, signup, marketing, plugin, widget, mailing list, subscriber, contacts, subscribe form
-Requires at least: 2.8.6
-Tested up to: 3.0.1
-Stable tag: 1.1.1
+===========================
+Plugin Name: GetResponse Plugin
+Description: This plugin will add GetResponse WebForm to your site. 
+Version: 1.2.0
+Author: Kacper Rowiński, Grzegorz Struczyński, Sylwester Okrój
+License: GPL2
+===========================
 
-The GetResponse Integration plugin allows you to quickly and easily add a signup form for your site.
+GetResponse Integration
 
-== Description ==
+This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment. 
 
-The GetResponse Integration plug-in allows you to quickly and easily add a sign up form for your site.
-You can configure you customs, conformation URLs and more! Its quick and easy way to add forms to you site.
 
-== Installation ==
-1. Extract all files to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Go to wigets and configure you plugin!
+Installation:
 
-== Frequently Asked Questions ==
+	Method 1.
 
-= How do I find my "Web from id" ? =
-Your web form id can be found on you account Contacts => Web froms. There if you move cursor over "preview" 
-link the last number after the ?id= code id you web from id.
+1. Download the GetResponse plug-in for your WordPress version.
+2. Unzip the downloaded file and extract the code to to your /wp-content/plugins/ folder.
+3. To complete installation you should activate the module in the plug-ins section of your administration panel.
 
-== Screenshots ==
+	Method 2.
 
-1. Some of widget options
-2. GetResponse form options
-3. Light box integration
-4. Example form on page
+1. Go to your WordPress admin account.
+2. Open Plug-Ins in the left-side bar menu, choose Add New, and search for GetResponse plug-in. Choose the available GetResponse Integration 1.2.0 version.
+3. Install the plug-in and activate it in your account. 
 
-== Changelog ==
+Plug-in update:
 
-= v1.1.1 =
+Note that the web form installed via the old version of the plug-in will still be fully operational, so you do not need to replace it with the new one. If you want to add the new “Subscribe via comment” function, simply delete old plug-in and install new – and use the same web form ID. 
 
-* Fixed integration with new WebForms.
-	
-= v1.1 =
+Configuration:
 
-* Added possiblity to use Wordpress styles,
-* Added integration with new WebForms.
+1. Create the web form in your GetResponse account.
+2. Go to you’re the plug-in settings in your WordPress account.
+3. Get your GetResponse form ID (you’ll learn where from the plug-in configuration window) and type it in the “Subscribe via Web Form” field. Note that leaving the field empty will disable any previously added web form.
+4. Enable the “Subscribe via Comment” option if you want to offer all commenting visitors to join your mailing list. Type in the invitation to subscribe e.g. “Subscribe to join the buzz”.
+5. Modify the position of your web form from your WordPress settings.
 
-= v1.0 =
-
-* Inital release.
+With GetResponse form builder you can fully adjust the form to your needs: add custom fields, confirmation URLs, enable pop-up option, image, logo etc. Note that to modify your WordPress form site you need to do it from GetResponse account – the changes will be displayed automatically on your site.
