@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 /*
-Plugin Name: GetResponse Plugin
+Plugin Name: GetResponse Integration Plugin
 Description: This plugin will add GetResponse WebForm to your site. 
 Version: 1.2.0
 Author: Kacper Rowiński, Grzegorz Struczyński, Sylwester Okrój

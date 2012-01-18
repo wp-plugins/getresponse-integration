@@ -4,7 +4,6 @@ Tags: getresponse, email, newsletter, signup, marketing, plugin, widget, mailing
 Requires at least: 2.8.6
 Tested up to: 3.0.1
 Stable tag: 1.2.0
-License: GPL2
 
 The GetResponse Integration plugin allows you to quickly and easily add a signup form for your site.
 
@@ -13,19 +12,19 @@ The GetResponse Integration plugin allows you to quickly and easily add a signup
 This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment. 
 
 == Installation ==
-	Method 1.
+= Method 1. =
 
 1. Download the GetResponse plug-in for your WordPress version.
 2. Unzip the downloaded file and extract the code to to your /wp-content/plugins/ folder.
 3. To complete installation you should activate the module in the plug-ins section of your administration panel.
 
-	Method 2.
+= Method 2. =
 
 1. Go to your WordPress admin account.
 2. Open Plug-Ins in the left-side bar menu, choose Add New, and search for GetResponse plug-in. Choose the available GetResponse Integration 1.2.0 version.
 3. Install the plug-in and activate it in your account. 
 
-Configuration:
+= Configuration: = =
 
 1. Create the web form in your GetResponse account.
 2. Go to you’re the plug-in settings in your WordPress account.
