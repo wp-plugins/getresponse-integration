@@ -24,7 +24,7 @@ This plug-in enables installation of a GetResponse fully customizable sign up fo
 2. Open Plug-Ins in the left-side bar menu, choose Add New, and search for GetResponse plug-in. Choose the available GetResponse Integration 1.2.0 version.
 3. Install the plug-in and activate it in your account. 
 
-= Configuration: = =
+= Configuration: =
 
 1. Create the web form in your GetResponse account.
 2. Go to you’re the plug-in settings in your WordPress account.
@@ -41,10 +41,12 @@ Your web form id can be found on you account Webforms. There if you move cursor 
 
 == Screenshots ==
 
-1. Some of widget options
-2. GetResponse form options
+1. Widget view
+2. How to find web form ID
 3. Light box integration
 4. Example form on page
+5. Leaving a comment view
+
 
 == Changelog ==
 
