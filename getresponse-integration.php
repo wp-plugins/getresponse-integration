@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /*
 Plugin Name: GetResponse Integration Plugin
 Description: This plugin will add GetResponse WebForm to your site. 
@@ -129,8 +129,7 @@ class Gr_Integration
                 update_option($this->GrOptionDbPrefix . 'new_web_from_id', $_POST['new_web_from_id']);
                 update_option($this->GrOptionDbPrefix . 'style_id', $_POST['style_id']);
                 update_option($this->GrOptionDbPrefix . 'comment_on', $_POST['comment_on']);
-                update_option($this->GrOptionDbPrefix . 'comment_label', $_POST['comment_label']);                
-                update_option($this->GrOptionDbPrefix . 'DEBUG', 'save option ok');            
+                update_option($this->GrOptionDbPrefix . 'comment_label', $_POST['comment_label']);         
 				?>
 					<div id="message" class="updated fade">
 						<p><strong><?php _e('Settings saved', 'Gr_Integration'); ?></strong></p>
@@ -143,7 +142,6 @@ class Gr_Integration
 		    			<p><strong><?php _e('Settings error', 'Gr_Integration'); ?></strong> - You must enter an integer to <i>Web from id</i> input or leave empty to disable.</p>
 		    		</div>
 	    		<?php
-	    		update_option($this->GrOptionDbPrefix . 'DEBUG', 'save option error');
 	    	}
 	    }
 
@@ -343,9 +341,6 @@ class Gr_Integration
 			$webform_id = get_option($this->GrOptionDbPrefix . 'new_web_from_id');			
 			$this->getresponse_curl_contact( $_POST['author'], $_POST['email'], $webform_id, 'GET');
 			$this->getresponse_curl_contact( $_POST['author'], $_POST['email'], $webform_id, 'POST');
-		}
-		else {
-			update_option($this->GrOptionDbPrefix . 'DEBUG', 'last sending subscription error');
 		}
 	}
 	

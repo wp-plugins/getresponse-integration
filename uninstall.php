@@ -11,5 +11,4 @@ delete_option($GrOptionDbPrefix . 'style_id');
 delete_option($GrOptionDbPrefix . 'widget');
 delete_option($GrOptionDbPrefix . 'comment_on');
 delete_option($GrOptionDbPrefix . 'comment_label');
-delete_option($GrOptionDbPrefix . 'DEBUG');
 ?>
