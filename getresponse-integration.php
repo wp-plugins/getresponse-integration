@@ -43,10 +43,6 @@ class Gr_Integration
         {			
             add_filter( 'plugin_action_links', array(&$this, 'AddPluginActionLink'), 10, 2 );
 		} 
-		else
-		{
-		    add_action('wp_footer', array(&$this, 'ShowPopup'));
-		}
 		
         load_plugin_textdomain( 'getresponse-i18n', str_replace(ABSPATH , '' , dirname(__FILE__) . '/mo' ) );
 
@@ -55,8 +51,6 @@ class Gr_Integration
 	    	'gr_style', 
 	    	get_bloginfo('wpurl') . '/wp-content/plugins/getresponse-integration/getresponse-integration.css'
 	    );
-	    
-	    add_action('admin_menu', 'my_plugin_menu');
 	    
      	// dodawanie funkcji komentarza
         if ( get_option($this->GrOptionDbPrefix . 'comment_on') AND
