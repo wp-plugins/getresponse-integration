@@ -1,9 +1,11 @@
 <?php
 /*
 Plugin Name: GetResponse Integration Plugin
-Description: This plugin will add GetResponse WebForm to your site. 
-Version: 1.2.0
-Author: Kacper Rowiński, Grzegorz Struczyński, Sylwester Okrój
+Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
+Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
+Version: 1.2.1
+Author: GetResponse
+Author URI: http://getresponse.com/
 License: GPL2
 
     This program is free software; you can redistribute it and/or modify
@@ -27,42 +29,32 @@ class Gr_Integration
 	 **/
 	var $GETRESPONSE_URL = 'http://getresponse.com/view_webform.js';
 	var $GETRESPONSE_URL_CURL = 'http://app.getresponse.com/add_contact_webform.html';		
-	var $GETRESPONSE_URL_FEED = 'http://blog.getresponse.com/feed';
-	
-	// plugin db prefix
-    var $GrOptionDbPrefix = 'GrIntegrationOptions_';
+	var $GETRESPONSE_URL_FEED = 'http://blog.getresponse.com/feed';	
+    var $GrOptionDbPrefix = 'GrIntegrationOptions_'; 	// plugin db prefix
     
 	/**
 	 * Constructor
 	 */
     function Gr_Integration()
     {
+        // settings site
         add_action('admin_menu',array(&$this, 'Init'));
         
+        // settings link in plugin page
         if (is_admin()) 
         {			
             add_filter( 'plugin_action_links', array(&$this, 'AddPluginActionLink'), 10, 2 );
-		} 
+		} 		
 		
-        load_plugin_textdomain( 'getresponse-i18n', str_replace(ABSPATH , '' , dirname(__FILE__) . '/mo' ) );
-
-	    // add css
-	    wp_enqueue_style(
-	    	'gr_style', 
-	    	get_bloginfo('wpurl') . '/wp-content/plugins/getresponse-integration/getresponse-integration.css'
-	    );
-	    
-     	// dodawanie funkcji komentarza
-        if ( get_option($this->GrOptionDbPrefix . 'comment_on') AND
-        		is_numeric(get_option($this->GrOptionDbPrefix . 'new_web_from_id'))
-        	)
+     	// on/off comment
+        if ( get_option($this->GrOptionDbPrefix . 'comment_on') AND is_numeric(get_option($this->GrOptionDbPrefix . 'new_web_from_id')))
         {        	
            	add_action('comment_form',array(&$this,'AddCheckboxToComment'));
           	add_action('comment_post',array(&$this,'GrabEmailFromComment'));          	
-        }
+        }      
         
+        // registe widget and css file
         add_action('init', array(&$this, 'WidgetRegister'));
-
     }
     
 	/**
@@ -70,7 +62,8 @@ class Gr_Integration
 	 */
     function Init()
     {
-	     add_options_page(
+    	// settings menu
+        add_options_page(
 	     				 __('GetResponse', 'Gr_Integration'),  
 	     				 __('GetResponse', 'Gr_Integration'), 
 	     		 		'manage_options', 
@@ -78,11 +71,13 @@ class Gr_Integration
 	     				array(&$this, 'AdminOptionsPage'
 	     				)
 	    );
+        
+        // enqueue CSS
+        wp_enqueue_style( 'GrStyle' );
     }
     
 	/**
 	 * Add settings change button on plugin page
-	 * @return array links
 	 */
 	function AddPluginActionLink( $links, $file )
 	{
@@ -106,7 +101,7 @@ class Gr_Integration
 		    $this_plugin = plugin_basename(__FILE__);
 		}  
 		return $this_plugin;
-	}
+	}	
 	
 	/**
 	 * Admin page settings
@@ -123,7 +118,7 @@ class Gr_Integration
                 update_option($this->GrOptionDbPrefix . 'new_web_from_id', $_POST['new_web_from_id']);
                 update_option($this->GrOptionDbPrefix . 'style_id', $_POST['style_id']);
                 update_option($this->GrOptionDbPrefix . 'comment_on', $_POST['comment_on']);
-                update_option($this->GrOptionDbPrefix . 'comment_label', $_POST['comment_label']);         
+                update_option($this->GrOptionDbPrefix . 'comment_label', $_POST['comment_label']);                
 				?>
 					<div id="message" class="updated fade">
 						<p><strong><?php _e('Settings saved', 'Gr_Integration'); ?></strong></p>
@@ -215,8 +210,7 @@ class Gr_Integration
 						</tr>
 					</tbody>
 				</table>
-			</div>
-			
+			</div>			
 		<!-- RSS BOX -->	
 			<div class="GR_rss_box">
 				<table class="wp-list-table widefat">
@@ -234,8 +228,7 @@ class Gr_Integration
 					</tbody>
 				</table>
 		<!-- SOCIAL BOX -->	
-			<br />
-				
+			<br />				
 				<table class="wp-list-table widefat">
 					<thead>
 						<tr>
@@ -263,9 +256,8 @@ class Gr_Integration
 						</tr>
 					</tbody>
 				</table>
-			</div>
-		
-<?php
+			</div>		
+		<?php
 	}
         
 	/**
@@ -281,18 +273,23 @@ class Gr_Integration
 		else {
 			$display = 'DisplaySidebarWidgetEmpty';
 		}
-
+        
+		// register webform widget
 		wp_register_sidebar_widget( 'getresponse-widget',
 									__( 'GetResponse WebForm', 'Gr_Integration' ),
 									array( &$this, $display ),
 									array( 'description' => ' ' )
-									);
-             
+									);  
+		// register CSS file    
+		wp_register_style( 'GrStyle', plugins_url('getresponse-integration.css', __FILE__) );
 	}
 
+	/**
+	 * Display webform
+	 */
 	function DisplaySidebarWidget()
 	{
-        $form .= '<P>';
+        $form = '<p>';
         $new_id = get_option($this->GrOptionDbPrefix . 'new_web_from_id');
         $style_id = get_option($this->GrOptionDbPrefix . 'style_id');
 
@@ -304,15 +301,21 @@ class Gr_Integration
         {
         	$form .= '<script type="text/javascript" src="' .$this->GETRESPONSE_URL. '?wid='. $new_id .'"></script>';
         }
-        $form .= '</P>';
+        $form .= '</p>';
         echo $form;
 	}
 	
+	/**
+	 * Display warrning where no webform_id
+	 */
 	function DisplaySidebarWidgetEmpty()
 	{
 		echo 'No Webform.';
 	}
 	
+	/**
+	 * Add Checkbox to comment form
+	 */
 	function AddCheckboxToComment()
 	{
 		if (!is_user_logged_in() ) {
@@ -328,6 +331,9 @@ class Gr_Integration
 		}
 	}
 	
+	/**
+	 * Grab email from comment form
+	 */
 	function GrabEmailFromComment()
 	{
 		if ( $_POST['comment_checkbox'] == 1 AND isset($_POST['email']) )
@@ -338,10 +344,12 @@ class Gr_Integration
 		}
 	}
 	
+	/**
+	 * Display GetResponse blog 10 RSS links
+	 */
 	function GrRss() {
-		// numbers of feeds:
-		$num = 10;
-
+		
+		$num = 10;	// numbers of feeds:
 		include_once(ABSPATH . WPINC . '/feed.php');
 		$rss = fetch_feed( $this->GETRESPONSE_URL_FEED );
 
@@ -373,12 +381,13 @@ class Gr_Integration
 				}
 			}
 			$content .= '</ul>';
-
 			echo $content;
 		}
 	}
 	
-	// curl
+	/**
+	 * Curl function to send a contact via comment
+	 */
 	function getresponse_curl_contact( $name, $email, $webform_id, $method='GET')
 	{
 		if ( function_exists( 'curl_init' ) )
@@ -415,7 +424,9 @@ class Gr_Integration
 	}
 }
 
-//init plugin
+	/**
+	 * Init plugin
+	 */
 if( defined('ABSPATH') and defined('WPINC') )
 {
     if ( empty($GLOBALS['Gr_Integration']) )
