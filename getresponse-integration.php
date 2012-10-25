@@ -3,7 +3,7 @@
 Plugin Name: GetResponse Integration Plugin
 Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
 Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
-Version: 1.2.1
+Version: 1.3.0
 Author: GetResponse
 Author URI: http://getresponse.com/
 License: GPL2
@@ -31,7 +31,7 @@ class Gr_Integration
 	var $GETRESPONSE_URL_CURL = 'http://app.getresponse.com/add_contact_webform.html';		
 	var $GETRESPONSE_URL_FEED = 'http://blog.getresponse.com/feed';	
     var $GrOptionDbPrefix = 'GrIntegrationOptions_'; 	// plugin db prefix
-    
+
 	/**
 	 * Constructor
 	 */
@@ -44,15 +44,29 @@ class Gr_Integration
         if (is_admin()) 
         {			
             add_filter( 'plugin_action_links', array(&$this, 'AddPluginActionLink'), 10, 2 );
-		} 		
-		
-     	// on/off comment
-        if ( get_option($this->GrOptionDbPrefix . 'comment_on') AND is_numeric(get_option($this->GrOptionDbPrefix . 'new_web_from_id')))
-        {        	
-           	add_action('comment_form',array(&$this,'AddCheckboxToComment'));
-          	add_action('comment_post',array(&$this,'GrabEmailFromComment'));          	
-        }      
-        
+		}
+
+        if (is_numeric(get_option($this->GrOptionDbPrefix . 'new_web_from_id')))
+        {
+            // on/off comment
+            if ( get_option($this->GrOptionDbPrefix . 'comment_on'))
+            {
+                add_action('comment_form',array(&$this,'AddCheckboxToComment'));
+                add_action('comment_post',array(&$this,'GrabEmailFromComment'));
+            }
+
+            // on/off checkout for WooCommerce
+            if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) )
+            {
+                if ( get_option($this->GrOptionDbPrefix . 'checkout_on'))
+                {
+                    add_action('woocommerce_after_checkout_billing_form', array(&$this, 'AddCheckboxToCheckoutPage'), 5);
+                    add_action('woocommerce_ppe_checkout_order_review', array(&$this, 'AddCheckboxToCheckoutPage'), 5);
+                    add_action('woocommerce_checkout_order_processed', array(&$this, 'GrabEmailFromCheckoutPage'), 5, 2);
+                    add_action('woocommerce_ppe_do_payaction', array(&$this, 'GrabEmailFromCheckoutPagePE'), 5, 1);
+                }
+            }
+        }
         // registe widget and css file
         add_action('init', array(&$this, 'WidgetRegister'));
     }
@@ -108,6 +122,13 @@ class Gr_Integration
 	 */
 	function AdminOptionsPage() 
 	{
+        $woocommerce = 'off';
+
+        if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) )
+        {
+            $woocommerce = 'on';
+        }
+
 	    if ( isset($_POST['new_web_from_id']) and 
 	    	 isset($_POST['style_id']) and 
 	    	 isset($_POST['comment_on']) and 
@@ -118,7 +139,14 @@ class Gr_Integration
                 update_option($this->GrOptionDbPrefix . 'new_web_from_id', $_POST['new_web_from_id']);
                 update_option($this->GrOptionDbPrefix . 'style_id', $_POST['style_id']);
                 update_option($this->GrOptionDbPrefix . 'comment_on', $_POST['comment_on']);
-                update_option($this->GrOptionDbPrefix . 'comment_label', $_POST['comment_label']);                
+                update_option($this->GrOptionDbPrefix . 'comment_label', $_POST['comment_label']);
+
+                if ( $woocommerce == 'on' and isset($_POST['checkout_on']))
+                {
+                    update_option($this->GrOptionDbPrefix . 'checkout_on', $_POST['checkout_on']);
+                    update_option($this->GrOptionDbPrefix . 'checkout_label', $_POST['checkout_label']);
+                }
+
 				?>
 					<div id="message" class="updated fade">
 						<p><strong><?php _e('Settings saved', 'Gr_Integration'); ?></strong></p>
@@ -195,7 +223,32 @@ class Gr_Integration
 										class="GR_label" for="comment_label"><?php _e('Additional text:', 'Gr_Integration'); ?>
 									</label> <input class="GR_input2" type="text" name="comment_label"
 										value="<?php echo get_option($this->GrOptionDbPrefix . 'comment_label', 'Sign up to our newsletter!') ?>" />
-			
+
+                                    <?php if ( $woocommerce == 'on' )
+                                    {
+                                        if (get_option($this->GrOptionDbPrefix . 'checkout_on') == 1)
+                                        {
+                                            $ch_on = "selected";
+                                        }
+                                        else
+                                        {
+                                            $ch_off = "selected";
+                                        }
+                                        ?>
+                                        <h3>Subscribe via Checkout Page</h3>
+                                        <label class="GR_label" for="checkout_on"><?php _e('Checkout integration:', 'Gr_Integration'); ?>
+                                        </label>
+                                        <select class="GR_select2" name="checkout_on">
+                                            <option value="1" <?php echo $ch_on;?>>On</option>
+                                            <option value="0" <?php echo $ch_off;?>>Off</option>
+                                        </select> (allow subscriptions visitors via the checkout page) <br /> <label
+                                            class="GR_label" for="comment_label"><?php _e('Additional text:', 'Gr_Integration'); ?>
+                                        </label>
+                                        <input class="GR_input2" type="text" name="checkout_label"
+                                               value="<?php echo get_option($this->GrOptionDbPrefix . 'checkout_label', 'Sign up to our newsletter!') ?>" />
+                                        <?php
+                                    }
+                                    ?>
 									<h3>Where is my web form ID?</h3>
 									<p>You'll find your web form ID right in your GetResponse account. Go to Web Forms => Web forms list and click on the "Source" link in a selected web form. Your web form ID is the number you'll see right after the "?wid=" portion of the JavaScript code. </p>
 									<div class="GR_img_webform_id"></div>	
@@ -330,7 +383,50 @@ class Gr_Integration
 		<?php
 		}
 	}
-	
+
+    /**
+	 * Add Checkbox to checkout form
+	 */
+	function AddCheckboxToCheckoutPage()
+	{
+		?>
+        <p class="form-row form-row-wide">
+            <input class="input-checkbox" value="1" id="checkout_checkbox" type="checkbox" name="checkout_checkbox">
+            <label for="checkout_checkbox" class="checkbox">
+                <?php echo get_option($this->GrOptionDbPrefix . 'checkout_label');?>
+            </label>
+        </p>
+		<?php
+	}
+
+    /**
+     * Grab email from checkout form
+     */
+    function GrabEmailFromCheckoutPage()
+    {
+        if ( $_POST['checkout_checkbox'] == 1 )
+        {
+            $name = $_POST['billing_first_name'] . " " . $_POST['billing_last_name'];
+            $webform_id = get_option($this->GrOptionDbPrefix . 'new_web_from_id');
+            $this->getresponse_curl_contact( $name, $_POST['billing_email'], $webform_id, 'GET');
+            $this->getresponse_curl_contact( $name, $_POST['billing_email'], $webform_id, 'POST');
+        }
+    }
+
+    /**
+     * Grab email from checkout form - paypal express
+     */
+    function GrabEmailFromCheckoutPagePE()
+    {
+        if ( $_POST['checkout_checkbox'] == 1 )
+        {
+            $name = 'Friend';
+            $webform_id = get_option($this->GrOptionDbPrefix . 'new_web_from_id');
+            $this->getresponse_curl_contact( $name, $_POST['billing_email'], $webform_id, 'GET');
+            $this->getresponse_curl_contact( $name, $_POST['billing_email'], $webform_id, 'POST');
+        }
+    }
+
 	/**
 	 * Grab email from comment form
 	 */
