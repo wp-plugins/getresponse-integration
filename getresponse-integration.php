@@ -3,7 +3,7 @@
 Plugin Name: GetResponse Integration Plugin
 Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
 Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
-Version: 1.3.0
+Version: 1.3.1
 Author: GetResponse
 Author URI: http://getresponse.com/
 License: GPL2
@@ -27,7 +27,7 @@ class Gr_Integration
 	/**
 	 * URL
 	 **/
-	var $GETRESPONSE_URL = 'http://getresponse.com/view_webform.js';
+	const GETRESPONSE_URL = 'http://getresponse.com/view_webform.js';
 	var $GETRESPONSE_URL_CURL = 'http://app.getresponse.com/add_contact_webform.html';		
 	var $GETRESPONSE_URL_FEED = 'http://blog.getresponse.com/feed';	
     var $GrOptionDbPrefix = 'GrIntegrationOptions_'; 	// plugin db prefix
@@ -249,6 +249,8 @@ class Gr_Integration
                                         <?php
                                     }
                                     ?>
+                                    <h3>Web Form Shortcode</h3>
+                                    <p>With the GetResponse Wordpress plugin, you can use shortcodes to place web forms in blog posts. Simply place the following tag in your post wherever you want the web form to appear: [grwebform wid="PUT_WEBFORM_ID_HERE" css="on/off"]. Below is a description of where to find the "wid" parameter. Set  the CSS parameter to ON, and the web form appears in GetResponse style; set it to OFF, and the web form appears in standard Wordpress style.</p>
 									<h3>Where is my web form ID?</h3>
 									<p>You'll find your web form ID right in your GetResponse account. Go to Web Forms => Web forms list and click on the "Source" link in a selected web form. Your web form ID is the number you'll see right after the "?wid=" portion of the JavaScript code. </p>
 									<div class="GR_img_webform_id"></div>	
@@ -348,16 +350,32 @@ class Gr_Integration
 
         if($style_id == 0)
         {
-        	$form .= '<script type="text/javascript" src="' .$this->GETRESPONSE_URL. '?wid='. $new_id .'&css=1"></script>';
+        	$form .= '<script type="text/javascript" src="' . self::GETRESPONSE_URL. '?wid='. $new_id .'&css=1"></script>';
         }
         elseif($style_id == 1)
         {
-        	$form .= '<script type="text/javascript" src="' .$this->GETRESPONSE_URL. '?wid='. $new_id .'"></script>';
+        	$form .= '<script type="text/javascript" src="' . self::GETRESPONSE_URL. '?wid='. $new_id .'"></script>';
         }
         $form .= '</p>';
         echo $form;
 	}
-	
+
+    /**
+     * Display shortcode for webform
+     *
+     * @param $atts
+     * @return string
+     */
+    public static function showWebformShortCode($atts)
+    {
+        $params = shortcode_atts( array(
+            'wid' => 'null',
+            'css' => 'on',
+        ), $atts );
+
+        return '<script type="text/javascript" src="' . self::GETRESPONSE_URL  . '?wid='. $params['wid'] . ($params['css'] == "off" ? "&css=1" : "" ) . '"></script>';
+    }
+
 	/**
 	 * Display warrning where no webform_id
 	 */
@@ -519,6 +537,8 @@ class Gr_Integration
 		}
 	}
 }
+
+add_shortcode( 'grwebform', array('Gr_Integration', 'showWebformShortCode') );
 
 	/**
 	 * Init plugin
