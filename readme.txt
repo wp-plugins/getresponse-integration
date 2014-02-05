@@ -41,6 +41,9 @@ With GetResponse form builder you can fully adjust the form to your needs: add c
 = How do I find my "Web from id" ? =
 Your web form id can be found on you account Webforms. There if you move cursor over "preview" link the last number after the ?id= code id you web from id.
 
+= Where can I place my web form on my Wordpress page? =
+You can embed your web form in the sidebar or in a lightbox. In order to use a lighbox, choose this form type in the web form type section, made available in the form editor in your GetResponse account.
+
 == Screenshots ==
 
 1. Widget view
