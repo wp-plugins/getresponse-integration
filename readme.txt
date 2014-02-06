@@ -2,7 +2,7 @@
 Contributors: GetResponse
 Tags: getresponse, email, newsletter, signup, marketing, plugin, widget, mailing list, subscriber, contacts, subscribe form, woocommerce
 Requires at least: 3.3.0
-Tested up to: 3.5.1
+Tested up to: 3.8.1
 Stable tag: 1.3.2
 
 The GetResponse Integration plugin allows you to quickly and easily add a sign-up form to your site.
@@ -57,7 +57,7 @@ You can embed your web form in the sidebar or in a lightbox. In order to use a l
 
 = v1.3.2 =
 
-* Fixed bugs in getting options. Thanks to @norcross.
+* Fixed bugs in getting options. Thanks to @norcross. FAQ updated
 
 = v1.3.1 =
 
