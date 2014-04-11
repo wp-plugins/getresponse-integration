@@ -3,7 +3,7 @@
 Plugin Name: GetResponse Integration Plugin
 Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
 Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
-Version: 2.0
+Version: 2.0.1
 Author: GetResponse
 Author: Grzegorz Struczynski
 Author URI: http://getresponse.com/
@@ -55,7 +55,7 @@ class Gr_Integration {
 		add_action('admin_menu', array(&$this, 'Init'));
 		
 		// settings link in plugin page
-		if (is_admin())  {
+		if (is_admin()) {
 			add_filter( 'plugin_action_links', array(&$this, 'AddPluginActionLink'), 10, 2 );
 		}
 
@@ -78,6 +78,12 @@ class Gr_Integration {
 		}
 		// register widget and css file
 		add_action( 'widgets_init', array( $this, 'register_widgets' ) );
+		add_action( 'plugins_loaded', array( $this, 'GrLangs') );
+		add_action( 'init', array( $this, 'GrButtons') );
+		add_action( 'admin_head', array( $this, 'GrJsShortcodes'));
+
+		// register shortcode
+		add_shortcode( 'grwebform', array( $this, 'showWebformShortCode') );
 	}
 
 	/**
@@ -150,7 +156,8 @@ class Gr_Integration {
 					);
 
 					foreach ($post_fields as $field) {
-						update_option($this->GrOptionDbPrefix . $field, $_POST[$field]);
+						if (isset($_POST[$field]))
+							update_option($this->GrOptionDbPrefix . $field, $_POST[$field]);
 					}
 
 					// woocommerce settings
@@ -643,8 +650,8 @@ class Gr_Integration {
 	 * GetResponse MCE buttons
 	 */
 	function GrButtons() {
-		add_filter( "mce_external_plugins", array('Gr_Integration', 'GrAddButtons') );
-		add_filter( 'mce_buttons', array('Gr_Integration', 'GrRegisterButtons') );
+		add_filter( "mce_external_plugins", array($this, 'GrAddButtons') );
+		add_filter( 'mce_buttons', array($this, 'GrRegisterButtons') );
 	}
 
 	/**
@@ -667,16 +674,13 @@ class Gr_Integration {
 	 * Display GetResponse MCE buttons
 	 */
 	function GrJsShortcodes() {
-
 		$GrOptionDbPrefix = 'GrIntegrationOptions_';
 		$api_key = get_option($GrOptionDbPrefix . 'api_key');
 
 		$api = new GetResponse($api_key);
 		$campaigns = $api->getCampaigns();
+		$webforms = $api->getWebforms();
 
-		if ( !empty($campaigns)) {
-			$webforms = $api->getWebforms();
-		}
 		$my_campaigns = json_encode($campaigns);
 		$my_webforms = json_encode($webforms);
 		?>
@@ -702,13 +706,8 @@ class Gr_Integration {
 	function GrLangs() {
 		load_plugin_textdomain( 'Gr_Integration', false, plugin_basename( dirname( __FILE__ ) ) . "/langs" );
 	}
+
 }
-
-add_shortcode( 'grwebform', array('Gr_Integration', 'showWebformShortCode') );
-
-add_action( 'plugins_loaded', array('Gr_Integration', 'GrLangs') );
-add_action( 'init', array('Gr_Integration', 'GrButtons') );
-add_action( 'admin_head', array('Gr_Integration', 'GrJsShortcodes'));
 
 /**
  * Init plugin

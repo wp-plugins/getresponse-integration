@@ -21,6 +21,11 @@
 						mlb.add(my_webforms[i].name + ' (' + my_campaigns[my_webforms[i].campaign].name + ')', my_webforms[i].url);
 					}
 				}
+				else if (my_webforms != null) {
+					for (var i in my_webforms) {
+						mlb.add(my_webforms[i].name, my_webforms[i].url);
+					}
+				}
 				else {
 					mlb.add('No webforms', null);
 				}
