@@ -56,6 +56,11 @@ You can find it on your GetResponse profile in Account Details -> GetResponse AP
 
 == Changelog ==
 
+= v2.0.2 =
+
+* Fixed curl error notification
+* Trigger error deleted
+
 = v2.0.1 =
 
 * Fixed Strict standards: non-static method
