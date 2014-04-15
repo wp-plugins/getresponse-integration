@@ -521,7 +521,6 @@ class Gr_Integration {
 	function AddCheckboxToComment() {
 		if (!is_user_logged_in() ) {
 			$checked = get_option($this->GrOptionDbPrefix . 'comment_checked');
-			var_dump($checked);
 			?>
 			<p>
 			<input class="GR_checkbox" value="1" id="comment_checkbox" type="checkbox" name="comment_checkbox" <?php if ($checked) {?>checked="checked"<?php }?>/>
