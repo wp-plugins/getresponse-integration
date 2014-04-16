@@ -3,7 +3,7 @@
 Plugin Name: GetResponse Integration Plugin
 Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
 Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
-Version: 2.0.3
+Version: 2.0.4
 Author: GetResponse
 Author: Grzegorz Struczynski
 Author URI: http://getresponse.com/
@@ -169,8 +169,8 @@ class Gr_Integration {
 					);
 
 					foreach ($post_fields as $field) {
-						if (isset($_POST[$field]))
-							update_option($this->GrOptionDbPrefix . $field, $_POST[$field]);
+						$val = isset($_POST[$field]) ? $_POST[$field] : null;
+						update_option($this->GrOptionDbPrefix . $field, $val);
 					}
 
 					// woocommerce settings
@@ -574,8 +574,8 @@ class Gr_Integration {
 			$api = $this->GetApiInstance();
 			if ($api) {
 				$customs = array();
+				$campaign = get_option($this->GrOptionDbPrefix . 'checkout_campaign');
 				if (get_option($this->GrOptionDbPrefix . 'sync_order_data') == true) {
-					$campaign = get_option($this->GrOptionDbPrefix . 'checkout_campaign');
 					foreach ($this->biling_fields as $custom_name => $custom_field) {
 						$custom = get_option($this->GrOptionDbPrefix . $custom_name);
 						if ($custom && !empty($_POST[$custom_field['value']])) {

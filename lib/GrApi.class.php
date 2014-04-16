@@ -66,6 +66,7 @@ class GetResponse
 	}
 
 	public function addContact($campaign, $name, $email, $cycle_day = 0, $customs = array()) {
+		$c = array();
 		$params = array(
 			'campaign' => $campaign,
 			'name' => $name,
@@ -74,12 +75,15 @@ class GetResponse
 			'ip' => $_SERVER['REMOTE_ADDR']
 		);
 
+		// default ref
+		$c[] = array('name' => 'ref', 'content' => 'wordpress');
 		if ( !empty($customs))  {
 			foreach($customs as $key => $val)  {
-				$c[] = array('name' => $key, 'content' => $val);
+				if (!empty($key) && !empty($val))
+					$c[] = array('name' => $key, 'content' => $val);
 			}
-			$params['customs'] = $c;
 		}
+		$params['customs'] = $c;
 
 		$request  = $this->request('add_contact', $params);
 		$response = $this->execute($request);
