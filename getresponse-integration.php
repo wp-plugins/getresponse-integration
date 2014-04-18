@@ -3,7 +3,7 @@
 Plugin Name: GetResponse Integration Plugin
 Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
 Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
-Version: 2.0.4
+Version: 2.0.5
 Author: GetResponse
 Author: Grzegorz Struczynski
 Author URI: http://getresponse.com/
@@ -662,15 +662,21 @@ class Gr_Integration {
 	 * GetResponse MCE buttons
 	 */
 	function GrButtons() {
-		add_filter( "mce_external_plugins", array($this, 'GrAddButtons') );
-		add_filter( 'mce_buttons', array($this, 'GrRegisterButtons') );
+		add_filter( 'mce_buttons', array(&$this, 'GrRegisterButtons') );
+		add_filter( "mce_external_plugins", array(&$this, 'GrAddButtons') );
 	}
 
 	/**
 	 * GetResponse MCE plugin
 	 */
 	function GrAddButtons( $plugin_array ) {
-		$plugin_array['gr'] = untrailingslashit( plugins_url( '/', __FILE__ ) ) . '/js/gr-plugin.js';
+		global $wp_version;
+
+		if ($wp_version >= 3.9)
+			$plugin_array['GrShortcodes'] = untrailingslashit( plugins_url( '/', __FILE__ ) ) . '/js/gr-plugin.js';
+		else
+			$plugin_array['GrShortcodes'] = untrailingslashit( plugins_url( '/', __FILE__ ) ) . '/js/gr-plugin_3_8.js';
+
 		return $plugin_array;
 	}
 
@@ -678,7 +684,11 @@ class Gr_Integration {
 	 * Display GetResponse MCE buttons
 	 */
 	function GrRegisterButtons( $buttons ) {
-		array_push( $buttons, 'webform' );
+		array_push(
+			$buttons,
+			'separator',
+			'GrShortcodes'
+		);
 		return $buttons;
 	}
 
