@@ -148,7 +148,7 @@ class Gr_Integration {
 		$apikey = isset($_POST['api_key']) ? $_POST['api_key'] : get_option($this->GrOptionDbPrefix . 'api_key');
 
 		if ( !empty($apikey)) {
-			$api = new GetResponse($apikey);
+			$api = new GetResponseIntegration($apikey);
 
 			// api errors
 			$ping = $api->ping();
@@ -699,7 +699,7 @@ class Gr_Integration {
 		$GrOptionDbPrefix = 'GrIntegrationOptions_';
 		$api_key = get_option($GrOptionDbPrefix . 'api_key');
 
-		$api = new GetResponse($api_key);
+		$api = new GetResponseIntegration($api_key);
 		$campaigns = $api->getCampaigns();
 		$webforms = $api->getWebforms();
 
@@ -718,7 +718,7 @@ class Gr_Integration {
 	 */
 	function GetApiInstance() {
 		$api_key = get_option($this->GrOptionDbPrefix . 'api_key');
-		$apiInstance = new GetResponse($api_key);
+		$apiInstance = new GetResponseIntegration($api_key);
 		return $apiInstance;
 	}
 

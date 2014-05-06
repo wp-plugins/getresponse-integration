@@ -5,7 +5,7 @@
  * @author Grzeogrz Struczynski <grzegorz.struczynski@implix.com>
  * http://getresponse.com
  */
-class GetResponse
+class GetResponseIntegration
 {
 	public $apiKey;
 	private $apiUrl = 'http://api2.getresponse.com';
