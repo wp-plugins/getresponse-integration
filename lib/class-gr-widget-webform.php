@@ -37,7 +37,7 @@ class GR_Widget extends WP_Widget {
 		$api_crypto = get_option($this->GrOptionDbPrefix . 'api_crypto');
 
 		if ( !empty($api_key)) {
-			$api = new GetResponse($api_key, $account_type, $api_crypto);
+			$api = new GetResponseIntegration($api_key, $account_type, $api_crypto);
 			$webform = $api->getWebform($webform_id);
 		}
 
@@ -73,7 +73,7 @@ class GR_Widget extends WP_Widget {
 		$api_crypto = get_option($this->GrOptionDbPrefix . 'api_crypto');
 
 		if ( !empty($api_key)) {
-			$api = new GetResponse($api_key, $account_type, $api_crypto);
+			$api = new GetResponseIntegration($api_key, $account_type, $api_crypto);
 			$campaigns = $api->getCampaigns();
 
 			if ( !empty($campaigns)) {
