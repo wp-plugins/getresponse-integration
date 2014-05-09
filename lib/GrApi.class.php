@@ -128,4 +128,4 @@ class GetResponseIntegration
 		curl_close($ch);
 		return $response;
 	}
-}
+} // class GetResponseIntegration

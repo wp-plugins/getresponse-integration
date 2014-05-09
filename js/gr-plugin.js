@@ -28,7 +28,6 @@
 			text: 'GR Web form',
 			values: getValues(),
 			onselect: function(v) {
-				console.log();
 				if (v.control.settings.url != null && v.control.settings.text != 'No web forms') {
 					var shortcode = '[grwebform url="' + v.control.settings.url + '" css="on"/]';
 					editor.insertContent(shortcode);
