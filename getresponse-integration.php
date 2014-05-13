@@ -3,7 +3,7 @@
 Plugin Name: GetResponse Integration Plugin
 Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
 Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
-Version: 2.1
+Version: 2.1.1
 Author: GetResponse
 Author: Grzegorz Struczynski
 Author URI: http://getresponse.com/
@@ -827,22 +827,23 @@ class Gr_Integration {
 			$api = new GetResponseIntegration($api_key);
 			$campaigns = $api->getCampaigns();
 			$webforms = $api->getWebforms();
-			// check if no errors
-			if ( !empty($webforms) and false === (is_array($webforms) and isset($webforms['type']) and $webforms['type'] == 'error')) {
-				$webforms = $this->SortByKeyValue($webforms, 'name');
-			}
-			else {
-				$campaigns = null;
-				$webforms = null;
-			}
-			$my_campaigns = json_encode($campaigns);
-			$my_webforms = json_encode($webforms);
-			?>
-			<script type="text/javascript">
-				var my_webforms = <?php echo $my_webforms; ?>;
-				var my_campaigns = <?php echo $my_campaigns; ?>;
-			</script>
-	<?php }
+		}
+		// check if no errors
+		if ( !empty($webforms) and false === (is_array($webforms) and isset($webforms['type']) and $webforms['type'] == 'error')) {
+			$webforms = $this->SortByKeyValue($webforms, 'name');
+		}
+		else {
+			$campaigns = null;
+			$webforms = null;
+		}
+		$my_campaigns = json_encode($campaigns);
+		$my_webforms = json_encode($webforms);
+		?>
+		<script type="text/javascript">
+			var my_webforms = <?php echo $my_webforms; ?>;
+			var my_campaigns = <?php echo $my_campaigns; ?>;
+		</script>
+	<?php
 	}
 
 	/**

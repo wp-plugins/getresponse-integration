@@ -3,13 +3,13 @@ Contributors: GetResponse
 Tags: getresponse, email, newsletter, signup, marketing, plugin, widget, mailing list, subscriber, contacts, subscribe form, woocommerce
 Requires at least: 3.3.0
 Tested up to: 3.9.1
-Stable tag: 2.1
+Stable tag: 2.1.1
 
 The GetResponse Integration plugin allows you to quickly and easily add a sign-up form to your site.
 
 == Description ==
 
-This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors can sign up to your contact list. They will be automatically added to your GetResponse campaign and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment. 
+This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors can sign up to your contact list. They will be automatically added to your GetResponse campaign and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment or registration form.
 If you have a WooCommerce account, this plugin will allow newsletter subscrpition via your checkout page.
 
 == Installation ==
@@ -29,17 +29,19 @@ If you have a WooCommerce account, this plugin will allow newsletter subscrpitio
 
 1. Create the web form in your GetResponse account.
 2. Go to your plug-in settings in your WordPress account.
-3. Enable the “Subscribe via Comment” option if you want to offer all commenting visitors to join your mailing list. Type in the invitation to subscribe e.g. “Subscribe to join the buzz”.
-4. Enable the “Subscribe via Checkout Page” option if you want to offer your customers to join your mailing list at the checkout stage. (available only if WooCommerce is activated). Type in the invitation to subscribe e.g. “Subscribe to join the buzz”.
-5. In the top menu bar inside the Wordpress WYSIWYG editor you will find a dropdown menu with all your GetResponse Web Forms. Click on the selected Web Form and it will be added into your Wordpress post.
-6. On the Wordpress Widgets page you can drag the GetResponse Web Form module into desired page areas. 
+3. Enter the API key and click "Save" to enable it.
+4. Enable the “Subscribe via Comment” option if you want to offer all commenting visitors to join your mailing list. Type in the invitation to subscribe e.g. “Subscribe to join the buzz”.
+5. Enable the “Subscribe via Registration Page” option if you want to offer your users to join your mailing list. Type in the invitation to subscribe e.g. “Subscribe to join the buzz”.
+6. Enable the “Subscribe via Checkout Page” option if you want to offer your customers to join your mailing list at the checkout stage. (available only if WooCommerce is activated). Type in the invitation to subscribe e.g. “Subscribe to join the buzz”.
+7. In the top menu bar inside the Wordpress WYSIWYG editor you will find a dropdown menu with all your GetResponse Web Forms. Click on the selected Web Form and it will be added into your Wordpress post.
+8. On the Wordpress Widgets page you can drag the GetResponse Web Form module into desired page areas.
 
 With GetResponse form builder you can fully adjust the form to your needs: add brand logo and image, custom fields, and confirmation URLs, or enable pop-up option. Note that to modify your WordPress form you need to do it from GetResponse account – the changes will be displayed automatically on your site.
 
 == Frequently Asked Questions ==
 
 = Where can I place my web form on my Wordpress page? =
-You can embed your web form in the sidebar or in a lightbox. In order to use a lighbox, choose this form type in the web form type section, made available in the form editor in your GetResponse account.
+You can embed your web form in the sidebar, pages, posts or in a lightbox. In order to use a lighbox, choose this form type in the web form type section, made available in the form editor in your GetResponse account.
 
 = Where can I find my API Key? =
 You can find it on your GetResponse profile in Account Details -> GetResponse API
@@ -55,6 +57,11 @@ You can find it on your GetResponse profile in Account Details -> GetResponse AP
 
 
 == Changelog ==
+
+= v2.1.1 =
+
+* Shortcode updated to TinyMCE 4 (fixed broken visual editor)
+* Description, Installation and FAQ updated
 
 = v2.1 =
 
