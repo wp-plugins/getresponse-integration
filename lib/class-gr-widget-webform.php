@@ -41,7 +41,7 @@ class GR_Widget extends WP_Widget {
 		// css styles Webform/Wordpress
 		$css = ($style_id == 1) ? '&css=1' : null;
 
-		if (!empty($webform))
+		if (!empty($webform) && isset($webform->$webform_id->url))
 		{
 			$form = '<p>';
 			$form .= '<script type="text/javascript" src="' . $webform->$webform_id->url . $css .'"></script>';

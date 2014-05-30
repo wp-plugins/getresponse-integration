@@ -147,8 +147,8 @@ class Gr_Integration {
 
 		$ordered = array();
 		foreach ($data as $key => $value) {
-			$ordered[$value->$sortKey] = $value;
-			$ordered[$value->$sortKey]->id = $key;
+			$ordered[$value->$sortKey.'_'.$key] = $value;
+			$ordered[$value->$sortKey.'_'.$key]->id = $key;
 		}
 
 		ksort($ordered, $sort_flags);
