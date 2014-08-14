@@ -12,6 +12,9 @@ The GetResponse Integration plugin allows you to quickly and easily add a sign-u
 This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors can sign up to your contact list. They will be automatically added to your GetResponse campaign and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment or registration form.
 If you have a WooCommerce account, this plugin will allow newsletter subscrpition via your checkout page.
 
+If you have any question please contact us via contact form:
+https://app.getresponse.com/feedback.html?devzone=yes
+
 == Installation ==
 = Method 1. =
 
