@@ -39,6 +39,9 @@ class GetResponseIntegration
 		if ( !is_array($response) && !$response->error) {
 			return $response->result;
 		}
+		else {
+			return array('type' => 'error', 'msg' => 'error');
+		}
 	}
 
 	public function getWebform($webform_id) {
@@ -117,6 +120,7 @@ class GetResponseIntegration
 		curl_setopt($ch, CURLOPT_HEADER, 'Content-type: application/json');
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		$response = json_decode(curl_exec($ch));
+
 		if (curl_error($ch)) {
 			return array('type' => 'error', 'msg' => curl_error($ch));
 		}

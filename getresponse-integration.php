@@ -3,7 +3,7 @@
 Plugin Name: GetResponse Integration Plugin
 Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
 Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
-Version: 2.1.2
+Version: 2.1.3
 Author: GetResponse
 Author: Grzegorz Struczynski
 Author URI: http://getresponse.com/
@@ -626,6 +626,10 @@ class Gr_Integration {
 			'css' => 'on',
 		), $atts );
 
+		if (is_ssl() && strpos($params['url'], 'http') === 0) {
+			$params['url'] = str_replace('http', 'https', $params['url']);
+		}
+
 		return '<script type="text/javascript" src="' . $params['url'] . ($params['css'] == "off" ? "&css=1" : "" ) . '"></script>';
 	}
 
@@ -828,9 +832,17 @@ class Gr_Integration {
 			$campaigns = $api->getCampaigns();
 			$webforms = $api->getWebforms();
 		}
+
 		// check if no errors
-		if ( !empty($webforms) and false === (is_array($webforms) and isset($webforms['type']) and $webforms['type'] == 'error')) {
+		if ( (!empty($webforms) and is_object($webforms)) ||
+			(is_array($webforms) and isset($webforms['type']) and $webforms['type'] != 'error')
+		) {
 			$webforms = $this->SortByKeyValue($webforms, 'name');
+			foreach ($webforms as $webform) {
+				if (is_ssl() && strpos($webform->url, 'http') === 0) {
+					$webform->url = str_replace('http', 'https', $webform->url);
+				}
+			}
 		}
 		else {
 			$campaigns = null;
@@ -887,4 +899,5 @@ if ( defined('ABSPATH') and defined('WPINC') ) {
 		$GLOBALS['Gr_Integration'] = new Gr_Integration();
 	}
 }
+
 ?>
