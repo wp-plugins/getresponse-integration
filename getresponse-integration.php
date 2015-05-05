@@ -7,7 +7,7 @@
  * to the site the visitors are automatically added to your GetResponse contact list
  * and sent a confirmation email. The plug-in additionally offers
  * sign-up upon leaving a comment.
- * Version: 2.2
+ * Version: 2.2.1
  * Author: GetResponse
  * Author: Grzegorz Struczynski
  * Author URI: http://getresponse.com/
@@ -203,7 +203,7 @@ class Gr_Integration {
 			$ordered[$value->$sortKey.'_'.$key]->id = $key;
 		}
 
-		ksort($ordered, SORT_NATURAL | SORT_FLAG_CASE);
+		ksort($ordered, SORT_ASC);
 
 		return array_values($ordered);
 	}
@@ -1285,6 +1285,7 @@ class Gr_Integration {
 		echo "Charset : " . get_bloginfo('charset') . "\n";
 		echo "Url : " . get_bloginfo('url') . "\n";
 		echo "Language : " . get_bloginfo('language') . "\n";
+		echo "PHP : " . phpversion() . "\n";
 	}
 
 	/**
