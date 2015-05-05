@@ -1,27 +1,31 @@
 <?php
-/*
-Plugin Name: GetResponse Integration Plugin
-Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
-Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
-Version: 2.1.4
-Author: GetResponse
-Author: Grzegorz Struczynski
-Author URI: http://getresponse.com/
-License: GPL2
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License, version 2, as
-	published by the Free Software Foundation.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+/**
+ * Plugin Name: GetResponse Integration Plugin
+ * Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
+ * Description: This plug-in enables installation of a GetResponse fully customizable
+ * sign up form on your WordPress site or blog. Once a web form is created and added
+ * to the site the visitors are automatically added to your GetResponse contact list
+ * and sent a confirmation email. The plug-in additionally offers
+ * sign-up upon leaving a comment.
+ * Version: 2.2
+ * Author: GetResponse
+ * Author: Grzegorz Struczynski
+ * Author URI: http://getresponse.com/
+ * License: GPL2
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 class Gr_Integration {
 	/**
@@ -46,10 +50,42 @@ class Gr_Integration {
 		);
 
 	/**
+	 * BuddyPress Max days limit
+	 * If user is unconfirmed until this number of days -
+	 * will be removed from temporary queue
+	 * @var int
+	 */
+	var $max_bp_unconfirmed_days = 30;
+
+	/**
+	 * @var bool
+	 */
+	var $buddypress_active = false;
+	var $woocomerce_active = false;
+	var $contact_form_url = "https://app.getresponse.com/feedback.html?devzone=yes&lang=en";
+
+	/**
+	 * @var GetResponse API Instance
+	 */
+	var $grApiInstance;
+
+	/**
 	 * Constructor
 	 */
 	function Gr_Integration() {
 		require_once('lib/GrApi.class.php');
+
+		$this->grApiInstance = $this->GetApiInstance();
+
+		// WooCommerce Plugin
+		if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+			$this->woocomerce_active = true;
+		}
+
+		// BuddyPress Plugin
+		if ( in_array( 'buddypress/bp-loader.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+			$this->buddypress_active = true;
+		}
 
 		// settings site
 		add_action('admin_menu', array(&$this, 'Init'));
@@ -72,13 +108,19 @@ class Gr_Integration {
 			}
 
 			// on/off checkout for WooCommerce
-			if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-				if ( get_option($this->GrOptionDbPrefix . 'checkout_on')) {
-					add_action('woocommerce_after_checkout_billing_form', array(&$this, 'AddCheckboxToCheckoutPage'), 5);
-					add_action('woocommerce_ppe_checkout_order_review', array(&$this, 'AddCheckboxToCheckoutPage'), 5);
-					add_action('woocommerce_checkout_order_processed', array(&$this, 'GrabEmailFromCheckoutPage'), 5, 2);
-					add_action('woocommerce_ppe_do_payaction', array(&$this, 'GrabEmailFromCheckoutPagePE'), 5, 1);
-				}
+			if ( $this->woocomerce_active === true && get_option($this->GrOptionDbPrefix . 'checkout_on')) {
+				add_action('woocommerce_after_checkout_billing_form', array(&$this, 'AddCheckboxToCheckoutPage'), 5);
+				add_action('woocommerce_ppe_checkout_order_review', array(&$this, 'AddCheckboxToCheckoutPage'), 5);
+				add_action('woocommerce_checkout_order_processed', array(&$this, 'GrabEmailFromCheckoutPage'), 5, 2);
+				add_action('woocommerce_ppe_do_payaction', array(&$this, 'GrabEmailFromCheckoutPagePE'), 5, 1);
+			}
+
+			// on/off registration for BuddyPress
+			if ( $this->buddypress_active === true && get_option($this->GrOptionDbPrefix . 'bp_registration_on')) {
+				add_action('bp_before_registration_submit_buttons', array(&$this, 'AddCheckboxToBpRegistrationPage'), 5);
+				add_action('bp_after_registration_confirmed', array(&$this, 'SetBpActivateKey'), 5, 1);
+				add_action('bp_after_activation_page', array(&$this, 'addActivatedBpContactsToGr'), 5, 1);
+				add_action('wp_head', array(&$this, 'AddGrBpCss'));
 			}
 		}
 		// register widget and css file
@@ -89,6 +131,9 @@ class Gr_Integration {
 
 		// register shortcode
 		add_shortcode( 'grwebform', array( $this, 'showWebformShortCode') );
+
+		// register ajax
+		add_action( 'wp_ajax_gr-traceroute-submit', array( $this, 'gr_traceroute_ajax_request'));
 	}
 
 	/**
@@ -110,10 +155,18 @@ class Gr_Integration {
 
 		// enqueue JS
 		wp_enqueue_script( 'GrCustomsJs' );
+
+		// detect adblock
+		wp_register_script( 'GrAdsJs', plugins_url('js/ads.js', __FILE__) );
+		wp_enqueue_script( 'GrAdsJs' );
 	}
 
 	/**
 	 * Add settings change button on plugin page
+	 * @param $links
+	 * @param $file
+	 *
+	 * @return mixed
 	 */
 	function AddPluginActionLink( $links, $file ) {
 		if ( $file == $this->PluginName() ) {
@@ -131,7 +184,7 @@ class Gr_Integration {
 		static $this_plugin;
 		if( empty($this_plugin) ) {
 			$this_plugin = plugin_basename(__FILE__);
-		}  
+		}
 		return $this_plugin;
 	}
 
@@ -139,10 +192,9 @@ class Gr_Integration {
 	 * Sort method
 	 * @param $data
 	 * @param $sortKey
-	 * @param int $sort_flags
 	 * @return array
 	 */
-	static function SortByKeyValue($data, $sortKey, $sort_flags=SORT_ASC) {
+	static function SortByKeyValue($data, $sortKey) {
 		if (empty($data) or !is_object($data) or empty($sortKey)) return $data;
 
 		$ordered = array();
@@ -151,9 +203,29 @@ class Gr_Integration {
 			$ordered[$value->$sortKey.'_'.$key]->id = $key;
 		}
 
-		ksort($ordered, $sort_flags);
+		ksort($ordered, SORT_NATURAL | SORT_FLAG_CASE);
 
 		return array_values($ordered);
+	}
+
+	/**
+	 * Ajax method get traceroute result
+	 */
+	function gr_traceroute_ajax_request() {
+		$response = '';
+		exec('traceroute -m15 api2.getresponse.com 2>&1', $out, $code);
+		if ($code && is_array($out)) {
+			$response = __('An error occurred while trying to traceroute: ', 'Gr_Integration') . join("\n", $out);
+		}
+		if ( !empty($out)) {
+			foreach ($out as $line) {
+				$response .= $line . "<br/>";
+			}
+		}
+		$response = json_encode( array( 'success' => $response ) );
+		header( "Content-Type: application/json" );
+		echo $response;
+		exit;
 	}
 
 	/**
@@ -164,34 +236,78 @@ class Gr_Integration {
 		//Check if curl extension is set and curl_init method is callable
 		$this->checkCurlExtension();
 
-		$woocommerce = 'off';
-		if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-			$woocommerce = 'on';
-		}
-
 		$apikey = isset($_POST['api_key']) ? $_POST['api_key'] : get_option($this->GrOptionDbPrefix . 'api_key');
 
-		if ( !empty($apikey)) {
+		if ( !empty($apikey) && !isset($_GET['error'])) {
 			$api = new GetResponseIntegration($apikey);
 
 			// api errors
 			$ping = $api->ping();
-			if (is_array($ping) && isset($ping['type']) && $ping['type'] == 'error')
-			{
-				echo '<h3>API Error !</h3>';
-				echo '<h4>' . $ping['msg'] . '</h4>';
+			if (is_array($ping) && isset($ping['type']) && $ping['type'] == 'error') { ?>
+				<div class="GR_config_box">
+					<table class="wp-list-table widefat">
+						<thead>
+							<tr>
+								<th><span class="GR_header"><?php _e('GetResponse Plugin - API Error', 'Gr_Integration'); ?></span></th>
+							</tr>
+						</thead>
+						<tbody id="the-list">
+						<tr class="active" id="">
+							<td class="desc">
+								<?php _e('Oops there was a problem connecting to the GetResponse API server.', 'Gr_Integration'); ?>
+								<br/><br/>
+								<?php _e('Error code/message:', 'Gr_Integration'); ?>
+								<blockquote>
+									<code><?php echo !empty($ping['msg']) ? $ping['msg'] : '4044'; ?></code>
+								</blockquote>
+								<?php _e('Traceroute result:', 'Gr_Integration'); ?>
+								<blockquote>
+									<div class="GR_traceroute" id="GrTraceroutResult">
+										<img src="images/loading.gif"/>
+										<?php _e('Receiving data, please be patient...', 'Gr_Integration'); ?>
+									</div>
+								</blockquote>
+								<br/>
+								<?php _e('Please', 'Gr_Integration'); ?>
+								<?php echo '<a href="' . $this->contact_form_url . '" target="_blank"><strong>' . __('CONTACT US', 'Gr_Integration') . '</strong></a>';?>
+								<?php _e('and send error code/message and traceroute result.', 'Gr_Integration'); ?>
+								<br/><br/><br/>
+								<a href="<?php echo 'options-general.php?page=' . $this->PluginName(); ?>&error=1"><?php _e('Back to GetResponse Plugin site', 'Gr_Integration'); ?></a>
+							</td>
+						</tr>
+						</tbody>
+					</table>
+				</div>
+				<script>
+					jQuery(document).ready(function($) {
+						$.ajax({
+							url: 'admin-ajax.php',
+							data: {
+								'action':'gr-traceroute-submit'
+							},
+							success:function(response) {
+								$('#GrTraceroutResult').html(response.success);
+							},
+							error: function(errorThrown){
+								$('#GrTraceroutResult').html(errorThrown);
+							}
+						});
+					});
+				</script>
+			<?php
 				return;
 			}
 
 			if (isset($ping->result->ping)) {
 				update_option($this->GrOptionDbPrefix . 'api_key', $apikey);
+				$this->grApiInstance = $this->GetApiInstance();
 
 				// admin page settings
 				if ( isset($_POST['comment_campaign']) || isset($_POST['checkout_campaign']) )
 				{
 					$post_fields = array(
 						'comment_campaign', 'checkout_campaign', 'comment_on', 'comment_label', 'comment_checked', 'checkout_checked', 'sync_order_data', 'fields_prefix',
-						'registration_campaign', 'registration_campaign', 'registration_on', 'registration_label', 'registration_checked'
+						'registration_campaign', 'registration_on', 'registration_label', 'registration_checked', 'bp_registration_campaign', 'bp_registration_checked'
 					);
 
 					foreach ($post_fields as $field) {
@@ -200,9 +316,15 @@ class Gr_Integration {
 					}
 
 					// woocommerce settings
-					if ( $woocommerce == 'on' and isset($_POST['checkout_on'])) {
+					if ( $this->woocomerce_active === true and isset($_POST['checkout_on'])) {
 						update_option($this->GrOptionDbPrefix . 'checkout_on', $_POST['checkout_on']);
 						update_option($this->GrOptionDbPrefix . 'checkout_label', $_POST['checkout_label']);
+					}
+
+					// buddypress settings
+					if ( $this->buddypress_active === true and isset($_POST['bp_registration_on'])) {
+						update_option($this->GrOptionDbPrefix . 'bp_registration_on', $_POST['bp_registration_on']);
+						update_option($this->GrOptionDbPrefix . 'bp_registration_label', $_POST['bp_registration_label']);
 					}
 					?>
 					<div id="message" class="updated fade" style="margin: 2px; 0px; 0px;">
@@ -275,9 +397,9 @@ class Gr_Integration {
 									</p>
 
 									<!-- SUBMIT -->
-									<br/>
-									<input type="submit" name="Submit" value="<?php _e('Save', 'Gr_Integration'); ?>"  class="button-primary" />
-
+									<?php if (get_option($this->GrOptionDbPrefix . 'api_key') == '') {?>
+									<input id="gr_primary_submit" type="submit" name="Submit" value="<?php _e('Save', 'Gr_Integration'); ?>"  class="button-primary" />
+									<?php }?>
 									<!-- WEBFORM SETTINGS -->
 									<div id="settings" <?php if (get_option($this->GrOptionDbPrefix . 'api_key') == '') {?>style="display: none;"<?php }?>>
 										<!-- SUBSCRIBE VIA WEB FORM -->
@@ -299,6 +421,7 @@ class Gr_Integration {
 										<?php
 										$comment_type = get_option($this->GrOptionDbPrefix . 'comment_on');
 										$registration_type = get_option($this->GrOptionDbPrefix . 'registration_on');
+										$bp_registration_type = get_option($this->GrOptionDbPrefix . 'bp_registration_on');
 										?>
 										<p>
 											<label class="GR_label" for="comment_on"><?php _e('Comment integration:', 'Gr_Integration'); ?></label>
@@ -312,10 +435,9 @@ class Gr_Integration {
 											$comment_campaign = get_option($this->GrOptionDbPrefix . 'comment_campaign');
 											$checkout_campaign = get_option($this->GrOptionDbPrefix . 'checkout_campaign');
 											$registration_campaign = get_option($this->GrOptionDbPrefix . 'registration_campaign');
-											// API Instance
-											$api = $this->GetApiInstance();
-											if ($api) {
-												$campaigns = $api->getCampaigns();
+											$bp_registration_campaign = get_option($this->GrOptionDbPrefix . 'bp_registration_campaign');
+											if ($this->grApiInstance) {
+												$campaigns = $this->grApiInstance->getCampaigns();
 											}
 										?>
 
@@ -388,7 +510,7 @@ class Gr_Integration {
 										<div id="registration_show" <?php if (get_option($this->GrOptionDbPrefix . 'registration_on') != 1) {?>style="display: none;"<?php }?>>
 											<!-- CAMPAIGN TARGET -->
 											<p>
-												<label class="GR_label"for="registration_campaign"><?php _e( 'Target Campaign:', 'Gr_Integration'); ?></label>
+												<label class="GR_label" for="registration_campaign"><?php _e( 'Target Campaign:', 'Gr_Integration'); ?></label>
 												<?php
 												// check if no errors
 												if ( !empty($campaigns) and false === (is_array($campaigns) and isset($campaigns['type']) and $campaigns['type'] == 'error')) {
@@ -431,11 +553,74 @@ class Gr_Integration {
 											});
 										</script>
 
+										<!-- SUBSCRIBE VIA BUDDYPRESS REGISTRATION PAGE-->
+										<?php if ( $this->buddypress_active === true ) { ?>
+										<h3>
+											<?php _e('Subscribe via BuddyPress Registration Page', 'Gr_Integration'); ?>
+										</h3>
+
+										<p>
+											<label class="GR_label" for="bp_registration_integration"><?php _e('Registration integration:', 'Gr_Integration'); ?></label>
+											<select class="GR_select2" name="bp_registration_on" id="bp_registration_integration">
+												<option value="0" <?php selected($bp_registration_type, 0); ?>><?php _e('Off', 'Gr_Integration'); ?></option>
+												<option value="1" <?php selected($bp_registration_type, 1); ?>><?php _e('On', 'Gr_Integration'); ?></option>
+											</select> <?php _e('(allow subscriptions at the BuddyPress registration page)', 'Gr_Integration'); ?>
+										</p>
+
+										<div id="bp_registration_show" <?php if (get_option($this->GrOptionDbPrefix . 'bp_registration_on') != 1) {?>style="display: none;"<?php }?>>
+											<!-- CAMPAIGN TARGET -->
+											<p>
+												<label class="GR_label" for="bp_registration_campaign"><?php _e( 'Target Campaign:', 'Gr_Integration'); ?></label>
+												<?php
+												// check if no errors
+												if ( !empty($campaigns) and false === (is_array($campaigns) and isset($campaigns['type']) and $campaigns['type'] == 'error')) {
+													?>
+													<select name="bp_registration_campaign" id="bp_registration_campaign" class="GR_select">
+														<?php
+														foreach ($campaigns as $campaign) {
+															echo '<option value="' . $campaign->id . '" id="' . $campaign->id . '"', $bp_registration_campaign == $campaign->id ? ' selected="selected"' : '', '>', $campaign->name, '</option>';
+														} ?>
+													</select>
+												<?php }
+												else {
+													_e('No Campaigns.', 'Gr_Integration');
+												}
+												?>
+											</p>
+
+											<!-- ADDITIONAL TEXT - REGISTRATION SUBSCRIPTION-->
+											<p>
+												<label class="GR_label" for="bp_registration_label"><?php _e('Additional text:', 'Gr_Integration'); ?></label>
+												<input class="GR_input2" type="text" name="bp_registration_label" id="bp_registration_label" value="<?php echo get_option($this->GrOptionDbPrefix . 'bp_registration_label', __( 'Sign up to our newsletter!', 'Gr_Integration')) ?>" />
+											</p>
+
+											<!-- DEFAULT CHECKED - REGISTRATION SUBSCRIPTION -->
+											<p>
+												<label class="GR_label" for="bp_registration_checked"><?php _e('Subscribe checkbox checked by default', 'Gr_Integration'); ?></label>
+												<input class="GR_checkbox" type="checkbox" name="bp_registration_checked" id="bp_registration_checked" value="1" <?php if (get_option($this->GrOptionDbPrefix . 'bp_registration_checked', '') == 1) { ?>checked="checked"<?php }?>/>
+											</p>
+										</div>
+
+										<script>
+											jQuery('#bp_registration_integration').change(function() {
+												var value = jQuery(this).val();
+												if (value == '1') {
+													jQuery('#bp_registration_show').show('slow');
+												}
+												else {
+													jQuery('#bp_registration_show').hide('slow');
+												}
+											});
+										</script>
+										<?php
+										}
+										?>
+
 										<!-- SUBSCRIPTION VIA CHECKOUT PAGE -->
-										<?php if ( $woocommerce == 'on' ) {
+										<?php if ( $this->woocomerce_active === true ) {
 											$checkout_type = get_option($this->GrOptionDbPrefix . 'checkout_on');
 										?>
-											<h3><?php _e('Subscribe via Checkout Page', 'Gr_Integration'); ?></h3>
+											<h3><?php _e('Subscribe via Checkout Page (WooCommerce)', 'Gr_Integration'); ?></h3>
 
 											<!-- CHECKOUT INTEGRATION SWITCH ON/OFF -->
 											<p>
@@ -535,26 +720,54 @@ class Gr_Integration {
 										}
 										?>
 
+
 										<!-- SUBMIT -->
 										<input type="submit" name="Submit" value="<?php _e('Save', 'Gr_Integration'); ?>" class="button-primary" />
 
 										<!-- WEB FORM SHORTCODE -->
 										<h3><?php _e('Web Form Shortcode', 'Gr_Integration'); ?></h3>
 										<p><?php _e('With the GetResponse Wordpress plugin, you can use shortcodes to place web forms in blog posts. Simply place the following tag in your post wherever you want the web form to appear:', 'Gr_Integration'); ?>
+											<br/><br/>
+											<code>[grwebform url="PUT_WEBFORM_URL_HERE" css="on/off" center="on/off" center_margin="200"/]</code>
+											<br/><br/>
+											<b><?php _e('Allowed attributes:', 'Gr_Integration'); ?></b>
 											<br/>
-											<code>[grwebform url="PUT_WEBFORM_URL_HERE" css="on/off"].</code>
+											<code>CSS</code> - <?php _e('Set this parameter to ON, and the web form will be displayed in GetResponse format; set it to OFF, and the web form will be displayed in the standard Wordpress format.', 'Gr_Integration'); ?>
 											<br/>
-											<?php _e('Set the CSS parameter to ON, and the web form will be displayed in GetResponse format; set it to OFF, and the web form will be displayed in the standard Wordpress format.', 'Gr_Integration'); ?>
+											<code>CENTER</code> - <?php _e('Set this parameter to ON, and the web form will be centralized; set it to OFF, and the web form will be displayed in the standard left side without margin.', 'Gr_Integration'); ?>
+											<br/>
+											<code>CENTER_MARGIN</code> - <?php _e('Set this parameter to customize margin (element width) [Default is 200px] ', 'Gr_Integration'); ?>
 										</p>
 										<div class="GR_img_webform_shortcode"></div>
+
+										<br/>
+										<h3><?php _e('Having problems with the plugin?', 'Gr_Integration'); ?></h3>
+										<?php _e('You can drop us a line including the following details and we\'ll do what we can. ', 'Gr_Integration'); ?>
+										<?php echo '<a href="' . $this->contact_form_url . '" target="_blank"><strong>' . __('CONTACT US', 'Gr_Integration') . '</strong></a>';?>
+										<textarea id="GrDetails" onclick="copyText(this)" style="width: 100%; height: 150px; resize:vertical ;"><?php
+											$this->getWpDetailsList();
+											$this->getActivePluginsList();
+											$this->getGrPluginDetailsList();
+											$this->getWidgetsList();
+										?></textarea>
+										<script>
+											if ( window.canRunAds === undefined ) {
+												jQuery('#GrDetails').append('\nAdBlock : active');
+											}
+
+											function copyText(element) {
+												element.focus();
+												element.select();
+											}
+										</script>
 									</div>
 								</form>
 							</td>
 						</tr>
 					</tbody>
 				</table>
-			</div>			
-		<!-- RSS BOX -->	
+			</div>
+		<!-- RSS BOX -->
 			<div class="GR_rss_box">
 				<table class="wp-list-table widefat">
 					<thead>
@@ -570,8 +783,8 @@ class Gr_Integration {
 						</tr>
 					</tbody>
 				</table>
-		<!-- SOCIAL BOX -->	
-			<br />				
+		<!-- SOCIAL BOX -->
+			<br />
 				<table class="wp-list-table widefat">
 					<thead>
 						<tr>
@@ -599,7 +812,7 @@ class Gr_Integration {
 						</tr>
 					</tbody>
 				</table>
-			</div>		
+			</div>
 		<?php
 	}
 
@@ -624,13 +837,21 @@ class Gr_Integration {
 		$params = shortcode_atts( array(
 			'url' => 'null',
 			'css' => 'on',
+			'center' => 'off',
+			'center_margin' => '200'
 		), $atts );
 
 		if (is_ssl() && strpos($params['url'], 'http') === 0) {
 			$params['url'] = str_replace('http', 'https', $params['url']);
 		}
 
-		return '<script type="text/javascript" src="' . $params['url'] . ($params['css'] == "off" ? "&css=1" : "" ) . '"></script>';
+		$div_start = $div_end = '';
+		if ($params['center'] == 'on') {
+			$div_start = '<div style="margin-left: auto; margin-right: auto; width: ' . $params['center_margin'] . 'px;">';
+			$div_end = '</div>';
+		}
+
+		return $div_start . '<script type="text/javascript" src="' . $params['url'] . htmlspecialchars(($params['css'] == "off" ? "&css=1" : "" )) . '"></script>' . $div_end;
 	}
 
 	/**
@@ -664,6 +885,29 @@ class Gr_Integration {
 	}
 
 	/**
+	 * Add Checkbox to BuddyPress registration form
+	 * styles can be simply edit: /css/getresponse-bp-form.css
+	 */
+	function AddCheckboxToBpRegistrationPage() {
+		$bp_checked = get_option($this->GrOptionDbPrefix . 'bp_registration_checked');
+		?>
+			<div class="gr_bp_register_checkbox">
+				<label>
+				<input class="input-checkbox GR_bpbox" value="1" id="gr_bp_checkbox" type="checkbox" name="gr_bp_checkbox" <?php if ($bp_checked) {?> checked="checked"<?php }?> />
+					<span class="gr_bp_register_label"><?php echo get_option($this->GrOptionDbPrefix . 'bp_registration_label');?></span>
+				</label>
+			</div>
+		<?php
+	}
+
+	/**
+	 * Add checkbox styles to BuddyPress integration
+	 */
+	function AddGrBpCss() {
+		echo '<link rel="stylesheet" id="gr-bp-css" href="'.WP_PLUGIN_URL.'/getresponse-integration/css/getresponse-bp-form.css" type="text/css" media="all">';
+	}
+
+	/**
 	 * Add Checkbox to registration form
 	 */
 	function AddCheckboxToRegistrationForm() {
@@ -686,8 +930,7 @@ class Gr_Integration {
 	function GrabEmailFromCheckoutPage() {
 		if ($_POST['gr_checkout_checkbox'] == 1 ) {
 			$name = $_POST['billing_first_name'] . " " . $_POST['billing_last_name'];
-			$api = $this->GetApiInstance();
-			if ($api) {
+			if ($this->grApiInstance) {
 				$customs = array();
 				$campaign = get_option($this->GrOptionDbPrefix . 'checkout_campaign');
 				if (get_option($this->GrOptionDbPrefix . 'sync_order_data') == true) {
@@ -698,8 +941,62 @@ class Gr_Integration {
 						}
 					}
 				}
-				$api->addContact($campaign, $name, $_POST['billing_email'], 0, $customs);
+				$this->grApiInstance->addContact($campaign, $name, $_POST['billing_email'], 0, $customs);
 			}
+		}
+	}
+
+	/**
+	 * Grab email from BuddyPress registration form
+	 */
+	function SetBpActivateKey() {
+		if ($_POST['gr_bp_checkbox'] == 1 && !empty($_POST['signup_email'])) {
+			$email = $_POST['signup_email'];
+			$emails = get_option($this->GrOptionDbPrefix . 'bp_registered_emails');
+			$emails_array = unserialize($emails);
+			if ( !empty($emails_array)) {
+				if (is_array($emails_array)) {
+					$emails = array_merge($emails_array, array($email));
+					update_option($this->GrOptionDbPrefix . 'bp_registered_emails', serialize($emails));
+				}
+			}
+			else {
+				update_option($this->GrOptionDbPrefix . 'bp_registered_emails', serialize(array($email)));
+			}
+		}
+	}
+
+	/**
+	 * Add activated contact to GR (BuddyPress)
+	 */
+	function addActivatedBpContactsToGr() {
+		$emails = get_option($this->GrOptionDbPrefix . 'bp_registered_emails');
+		if ( !empty($emails)) {
+			$emails_array = unserialize($emails);
+			if (is_array($emails_array)) {
+				foreach ($emails_array as $k => $v) {
+					$unset = false;
+					$user = $this->getUserDetailsByEmail($v);
+
+					if ( !empty($user)) {
+						if ($user->activation_key == null) {
+							if ($this->grApiInstance) {
+								$customs = array();
+								$campaign = get_option($this->GrOptionDbPrefix . 'bp_registration_campaign');
+								$this->grApiInstance->addContact($campaign, $user->display_name, $user->user_email, 0, $customs);
+							}
+							$unset = true;
+						}
+						else if ( (bool)($this->getDateDiffWithCurrentDate($user->user_registered) >= $this->max_bp_unconfirmed_days) == true ) {
+							$unset = true;
+						}
+					}
+					if ($unset == true) {
+						unset($emails_array[$k]);
+					}
+				}
+			}
+			update_option($this->GrOptionDbPrefix . 'bp_registered_emails', serialize($emails_array));
 		}
 	}
 
@@ -708,10 +1005,9 @@ class Gr_Integration {
 	 */
 	function GrabEmailFromCheckoutPagePE() {
 		if ($_POST['gr_checkout_checkbox'] == 1 ) {
-			$api = $this->GetApiInstance();
-			if ($api) {
+			if ($this->grApiInstance) {
 				$campaign = get_option($this->GrOptionDbPrefix . 'checkout_campaign');
-				$api->addContact($campaign, 'Friend', $_POST['billing_email']);
+				$this->grApiInstance->addContact($campaign, 'Friend', $_POST['billing_email']);
 			}
 		}
 	}
@@ -721,10 +1017,9 @@ class Gr_Integration {
 	 */
 	function GrabEmailFromComment() {
 		if ( $_POST['gr_comment_checkbox'] == 1 AND isset($_POST['email']) ) {
-			$api = $this->GetApiInstance();
-			if ($api) {
+			if ($this->grApiInstance) {
 				$campaign = get_option($this->GrOptionDbPrefix . 'comment_campaign');
-				$api->addContact($campaign, $_POST['author'], $_POST['email']);
+				$this->grApiInstance->addContact($campaign, $_POST['author'], $_POST['email']);
 			}
 		}
 	}
@@ -733,11 +1028,19 @@ class Gr_Integration {
 	 * Grab email from registration form
 	 */
 	function GrabEmailFromRegistrationForm() {
-		if ( $_POST['gr_registration_checkbox'] == 1 AND isset($_POST['user_email']) ) {
-			$api = $this->GetApiInstance();
-			if ($api) {
+		if ( $_POST['gr_registration_checkbox'] == 1 && $this->grApiInstance ) {
+			if ($this->woocomerce_active === true && isset($_POST['email'])) {
+				$email = $_POST['email'];
+				$name = isset($_POST['billing_first_name']) ? $_POST['billing_first_name'] : 'Friend';
+			}
+			else if (isset($_POST['user_email']) && isset($_POST['user_login'])) {
+				$email = $_POST['user_email'];
+				$name = $_POST['user_login'];
+			}
+
+			if ( !empty($email) && !empty($name) ) {
 				$campaign = get_option($this->GrOptionDbPrefix . 'registration_campaign');
-				$api->addContact($campaign, $_POST['user_login'], $_POST['user_email']);
+				$this->grApiInstance->addContact($campaign, $name, $email);
 			}
 		}
 	}
@@ -750,12 +1053,12 @@ class Gr_Integration {
 		$lang = get_bloginfo("language") == 'pl-PL' ? 'pl' : 'com';
 		$feed_url = 'http://blog.getresponse.' . $lang . '/feed';
 
-		$num = 12; // numbers of feeds:
+		$num = 15; // numbers of feeds:
 		include_once(ABSPATH . WPINC . '/feed.php');
 		$rss = fetch_feed( $feed_url );
 
 		if ( is_wp_error($rss) ) {
-			echo 'No rss items, feed might be broken.';
+			_e('No rss items, feed might be broken.', 'Gr_Integration');
 		}
 		else
 		{
@@ -772,7 +1075,7 @@ class Gr_Integration {
 
 			$content = '<ul class="GR_rss_ul">';
 			if ( !$rss_items ) {
-				$content .= '<li class="GR_rss_li">No rss items, feed might be broken.</li>';
+				$content .= '<li class="GR_rss_li">' . _e('No rss items, feed might be broken.', 'Gr_Integration') . '</li>';
 			} else {
 				foreach ( $rss_items as $item ) {
 					$url = preg_replace( '/#.*/', '', esc_url( $item->get_permalink(), $protocolls=null, 'display' ) );
@@ -827,7 +1130,8 @@ class Gr_Integration {
 		$GrOptionDbPrefix = 'GrIntegrationOptions_';
 		$api_key = get_option($GrOptionDbPrefix . 'api_key');
 
-		if (!empty($api_key)) {
+		$webforms = null;
+		if ( !empty($api_key)) {
 			$api = new GetResponseIntegration($api_key);
 			$campaigns = $api->getCampaigns();
 			$webforms = $api->getWebforms();
@@ -889,6 +1193,109 @@ class Gr_Integration {
 			return;
 		}
 	}
+
+	/**
+	 * Return user details by email address
+	 * @param $email
+	 *
+	 * @return bool|mixed
+	 */
+	function getUserDetailsByEmail($email) {
+		if (empty($email)) {
+			return false;
+		}
+
+		global $wpdb;
+		$sql = "
+				SELECT
+				users.user_email,
+				users.display_name,
+				users.user_registered,
+				(SELECT usermeta.meta_value FROM $wpdb->usermeta usermeta
+				WHERE usermeta.meta_key = 'activation_key' and usermeta.user_id = users.ID) as activation_key
+				FROM $wpdb->users users
+				WHERE
+				users.user_email = '" . $email . "'
+				";
+		return $wpdb->get_row($sql);
+	}
+
+	/**
+	 * Return GetResponse plugin details
+	 *
+	 * @return bool|mixed
+	 */
+	function getGrPluginDetails() {
+		global $wpdb;
+		$sql = "
+				SELECT *
+				FROM $wpdb->options options
+				WHERE options.`option_name` LIKE 'GrIntegrationOptions%'
+				ORDER BY options.`option_name` DESC;
+				";
+		return $wpdb->get_results($sql);
+	}
+
+	/**
+	 * Return different between current date and registered date in days
+	 * @param $user_registered_date
+	 *
+	 * @return bool
+	 */
+	function getDateDiffWithCurrentDate($user_registered_date) {
+		$diff = strtotime(date("Y-m-d H:i:s")) - (strtotime($user_registered_date));
+		return floor($diff/3600/24);
+	}
+
+	/**
+	 * Return list of active plugins
+	 */
+	function getActivePluginsList() {
+		echo "Active plugins:\n";
+		foreach (get_plugins() as $plugin_name => $plugin_details) {
+			if (is_plugin_active($plugin_name) === true) {
+				foreach ($plugin_details as $details_key => $details_value) {
+					if (in_array($details_key, array('Name', 'Version', 'PluginURI'))) {
+						echo $details_key . " : " .$details_value . "\n";
+					}
+				}
+				echo "Path : " . $plugin_name . "\n";
+			}
+		}
+	}
+
+	/**
+	 * Return list of active plugins
+	 */
+	function getGrPluginDetailsList() {
+		echo "Getresponse-integration details:\n";
+		$details = $this->getGrPluginDetails();
+		if ( !empty($details)){
+			foreach ($details as $detail) {
+				echo str_replace('GrIntegrationOptions_', '', $detail->option_name) . " : " . $detail->option_value . "\n";
+			}
+		}
+	}
+
+	/**
+	 * Return list WP details
+	 */
+	function getWpDetailsList() {
+		echo "Version : " . get_bloginfo('version') . "\n";
+		echo "Charset : " . get_bloginfo('charset') . "\n";
+		echo "Url : " . get_bloginfo('url') . "\n";
+		echo "Language : " . get_bloginfo('language') . "\n";
+	}
+
+	/**
+	 * Return active widgets
+	 */
+	function getWidgetsList() {
+		echo "Widgets:\n";
+		$widgets = get_option('sidebars_widgets');
+		echo serialize($widgets);
+	}
+
 } //Gr_Integration
 
 /**

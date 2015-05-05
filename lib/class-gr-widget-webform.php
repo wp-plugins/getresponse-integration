@@ -31,6 +31,8 @@ class GR_Widget extends WP_Widget {
 	public function widget( $args, $instance ) {
 		$webform_id = $instance['select'];
 		$style_id = $instance['style'];
+		$center = $instance['center'];
+		$center_margin = $instance['center_margin'];
 
 		$api_key = get_option($this->GrOptionDbPrefix . 'api_key');
 		if ( !empty($api_key)) {
@@ -47,8 +49,14 @@ class GR_Widget extends WP_Widget {
 				$webform->$webform_id->url = str_replace('http', 'https', $webform->$webform_id->url);
 			}
 
+			$div_start = $div_end = '';
+			if ($center == '1') {
+				$div_start = '<div style="margin-left: auto; margin-right: auto; width: ' . $center_margin . 'px;">';
+				$div_end = '</div>';
+			}
+
 			$form = '<p>';
-			$form .= '<script type="text/javascript" src="' . $webform->$webform_id->url . $css .'"></script>';
+			$form .= $div_start . '<script type="text/javascript" src="' . htmlspecialchars($webform->$webform_id->url . $css) .'"></script>' . $div_end;
 			$form .= '</p>';
 		}
 
@@ -72,6 +80,8 @@ class GR_Widget extends WP_Widget {
 
 		$select = ($instance) ? esc_attr($instance['select']) : '';
 		$style = ($instance) ? esc_attr($instance['style']) : '';
+		$center = ($instance) ? esc_attr($instance['center']) : '';
+		$center_margin = ($instance) ? esc_attr($instance['center_margin']) : '';
 		$api_key = get_option($this->GrOptionDbPrefix . 'api_key');
 		if ( !empty($api_key)) {
 			$api = new GetResponseIntegration($api_key);
@@ -109,6 +119,14 @@ class GR_Widget extends WP_Widget {
 			<input id="<?php echo $this->get_field_id('style'); ?>" name="<?php echo $this->get_field_name('style'); ?>" type="checkbox" value="1" <?php checked( '1', $style ); ?> />
 			<label for="<?php echo $this->get_field_id('style'); ?>"><?php _e('Use Wordpress CSS styles', 'Gr_Integration'); ?></label>
 		</p>
+		<p id="gr_center">
+			<input id="<?php echo $this->get_field_id('center'); ?>" name="<?php echo $this->get_field_name('center'); ?>" type="checkbox" value="1" <?php checked( '1', $center ); ?> />
+			<label for="<?php echo $this->get_field_id('center'); ?>"><?php _e('Center Webform', 'Gr_Integration'); ?></label>
+
+			<label for="<?php echo $this->get_field_id('center_margin'); ?>"> (<?php _e('Margin:', 'Gr_Integration'); ?></label>
+			<input id="<?php echo $this->get_field_id('center_margin'); ?>" name="<?php echo $this->get_field_name('center_margin'); ?>" type="text" value="<?php echo !empty($center_margin) ? $center_margin : '200'; ?>" size="4"/>px)
+		</p>
+
 		<?php
 		}
 		else {
@@ -132,6 +150,8 @@ class GR_Widget extends WP_Widget {
 		$instance = array();
 		$instance['select'] = strip_tags($new_instance['select']);
 		$instance['style'] = strip_tags($new_instance['style']);
+		$instance['center'] = strip_tags($new_instance['center']);
+		$instance['center_margin'] = (int)strip_tags($new_instance['center_margin']);
 
 		return $instance;
 	}

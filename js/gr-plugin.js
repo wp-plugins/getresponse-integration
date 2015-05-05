@@ -29,7 +29,7 @@
 			values: getValues(),
 			onselect: function(v) {
 				if (v.control.settings.url != null && v.control.settings.text != 'No web forms') {
-					var shortcode = '[grwebform url="' + v.control.settings.url + '" css="on"/]';
+					var shortcode = '[grwebform url="' + v.control.settings.url + '" css="on" center="off" center_margin="200"/]';
 					editor.insertContent(shortcode);
 				}
 			}

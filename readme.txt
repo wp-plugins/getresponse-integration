@@ -3,7 +3,7 @@ Contributors: GetResponse
 Tags: getresponse, email, newsletter, signup, marketing, plugin, widget, mailing list, subscriber, contacts, subscribe form, woocommerce
 Requires at least: 3.3.0
 Tested up to: 4.2
-Stable tag: 2.1.4
+Stable tag: 2.2
 
 The GetResponse Integration plugin allows you to quickly and easily add a sign-up form to your site.
 
@@ -60,6 +60,15 @@ You can find it on your GetResponse profile in Account Details -> GetResponse AP
 
 
 == Changelog ==
+
+= v2.2 =
+
+* Added Subscribe via BuddyPress Registration page
+* Added Subscribe via WooCommerce Registration page
+* Added Convert special characters to HTML entities in Webform url
+* Added Shortcode attribute "center" - allows to center Webform easily
+* Added Shortcode attribute "center_margin" - allows to edit margin (center position)
+* Campaign names and Web Forms are now sorted by name using case-insensitive ordering
 
 = v2.1.4 =
 

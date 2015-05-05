@@ -21,4 +21,9 @@ delete_option($GrOptionDbPrefix . 'checkout_on');
 delete_option($GrOptionDbPrefix . 'checkout_label');
 delete_option($GrOptionDbPrefix . 'checkout_checked');
 delete_option($GrOptionDbPrefix . 'sync_order_data');
+delete_option($GrOptionDbPrefix . 'bp_registration_campaign');
+delete_option($GrOptionDbPrefix . 'bp_registration_checked');
+delete_option($GrOptionDbPrefix . 'bp_registration_on');
+delete_option($GrOptionDbPrefix . 'bp_registration_label');
+delete_option($GrOptionDbPrefix . 'fields_prefix');
 ?>
