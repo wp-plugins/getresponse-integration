@@ -4,7 +4,7 @@
 		function getValues() {
 			var wf = [];
 
-			if (my_webforms != null) {
+            if (typeof(my_webforms) !== 'undefined' && my_webforms != null) {
 				for (var i in my_webforms) {
 
 					var webforms = {};

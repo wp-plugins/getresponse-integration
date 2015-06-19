@@ -7,7 +7,7 @@
  * to the site the visitors are automatically added to your GetResponse contact list
  * and sent a confirmation email. The plug-in additionally offers
  * sign-up upon leaving a comment.
- * Version: 2.2.1
+ * Version: 2.2.2
  * Author: GetResponse
  * Author: Grzegorz Struczynski
  * Author URI: http://getresponse.com/
