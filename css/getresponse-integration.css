@@ -29,3 +29,5 @@
 .gr-tip span { font-size: 1em; color: #555; }
 .gr-tip.content-img { padding: 7px 10px 7px 25px; width: 442px; }
 .gr-tip.content-img img { margin-left: -15px; }
+
+.gr-loading { display: none;}
