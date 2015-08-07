@@ -1,0 +1,355 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: getresponse-integration\n"
+"POT-Creation-Date: 2015-08-07 14:43+0100\n"
+"PO-Revision-Date: 2015-08-07 14:43+0100\n"
+"Last-Translator: \n"
+"Language-Team: GetResponse\n"
+"Language: pl_PL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.7.6\n"
+"X-Poedit-Basepath: .\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: _e;__\n"
+"X-Poedit-SearchPath-0: ../.\n"
+
+#: .././getresponse-integration.php:139 .././getresponse-integration.php:140
+msgid "GetResponse"
+msgstr "GetResponse"
+
+#: .././getresponse-integration.php:181
+msgid "Settings"
+msgstr "Ustawienia"
+
+#: .././getresponse-integration.php:212
+msgid "An error occurred while trying to traceroute: "
+msgstr "Wystąpił błąd podczas wykonywania komendy treceroute"
+
+#: .././getresponse-integration.php:293
+msgid "GetResponse Plugin - API Error"
+msgstr "GetResponse Plugin - Błąd API"
+
+#: .././getresponse-integration.php:300
+msgid "Oops there was a problem connecting to the GetResponse API server."
+msgstr "Niestety wystąpił problem z połączeniem do serwera GetResponse API."
+
+#: .././getresponse-integration.php:302
+msgid "Error code/message:"
+msgstr "Kod błędu/komunikat:"
+
+#: .././getresponse-integration.php:306
+msgid "Traceroute result:"
+msgstr "Traceroute wynik:"
+
+#: .././getresponse-integration.php:310
+msgid "Receiving data, please be patient..."
+msgstr "Trwa odbieranie danych, prosimy o cierpliwość..."
+
+#: .././getresponse-integration.php:314
+msgid "Please"
+msgstr " "
+
+#: .././getresponse-integration.php:315 .././getresponse-integration.php:844
+msgid "CONTACT US"
+msgstr "Napisz do nas"
+
+#: .././getresponse-integration.php:316
+msgid "and send error code/message and traceroute result."
+msgstr "i prześlij kod błędu/komunikat oraz wynik traceroute'a"
+
+#: .././getresponse-integration.php:318
+msgid "Back to GetResponse Plugin site"
+msgstr "Wróć do strony z pluginem GetResponse"
+
+#: .././getresponse-integration.php:390
+msgid "Settings saved"
+msgstr "Ustawienia zapisane"
+
+#: .././getresponse-integration.php:422 .././getresponse-integration.php:434
+msgid "Settings error"
+msgstr "Błąd podczas zapisu"
+
+#: .././getresponse-integration.php:422
+msgid " - Invalid API Key"
+msgstr " - Niepoprawny klucz API"
+
+#: .././getresponse-integration.php:434
+msgid " - API Key can't be empty."
+msgstr " - pole z Kluczem API nie może być puste"
+
+#: .././getresponse-integration.php:447
+msgid "GetResponse Plugin Settings"
+msgstr "Ustawienia GetResponse"
+
+#: .././getresponse-integration.php:456
+msgid ""
+"The new GetResponse Forms are now available! Enjoy a new era of growing your "
+"list, but be patient if any issues with the WordPress Plugin may occur "
+"during the BETA phase. We’re polishing it as we speak!"
+msgstr ""
+"Nowe formularze są już dostępne! Wejdź w nową erę budowania listy i bądź "
+"cierpliwy jeśli pojawią się drobne niedogodności z pluginem WordPress "
+"podczas trwania wersji BETA. Udoskonalamy ją w tym momencie!"
+
+#: .././getresponse-integration.php:468
+msgid "API Key:"
+msgstr "Klucz API:"
+
+#: .././getresponse-integration.php:475
+msgid ""
+"Enter your API key. You can find it on your GetResponse profile in Account "
+"Details -> GetResponse API"
+msgstr ""
+"Wprowadź klucz API. Możesz go znaleźć w Twoim koncie GetResponse: Ustawienia "
+"konta -> GetResponse API"
+
+#: .././getresponse-integration.php:485 .././getresponse-integration.php:812
+msgid "Save"
+msgstr "Zapisz"
+
+#: .././getresponse-integration.php:492
+msgid "Subscribe via Web Form"
+msgstr "Zapis przez Formularz Zapisu"
+
+#: .././getresponse-integration.php:496
+msgid ""
+"To activate a GetResponse Web Form widget drag it to a sidebar or click on "
+"it."
+msgstr ""
+"Aby aktywować Formularze Zapisu GetResponse, przeciąnij wtyczkę lub kliknij "
+"w nią."
+
+#: .././getresponse-integration.php:497
+msgid "Go to Widgets site"
+msgstr "Przejdź do Wtyczek"
+
+#: .././getresponse-integration.php:502
+msgid "Subscribe via Comment"
+msgstr "Zapis przez komentarz"
+
+#: .././getresponse-integration.php:513
+msgid "Comment integration:"
+msgstr "Integracja z komentarzami"
+
+#: .././getresponse-integration.php:516 .././getresponse-integration.php:586
+#: .././getresponse-integration.php:647 .././getresponse-integration.php:713
+msgid "Off"
+msgstr "Wyłączona"
+
+#: .././getresponse-integration.php:518 .././getresponse-integration.php:588
+#: .././getresponse-integration.php:649 .././getresponse-integration.php:715
+msgid "On"
+msgstr "Włączona"
+
+#: .././getresponse-integration.php:519
+msgid "(allow subscriptions when visitors comment)"
+msgstr "(pozwala na zapis, gdy goście komentują)"
+
+#: .././getresponse-integration.php:539 .././getresponse-integration.php:598
+#: .././getresponse-integration.php:659
+msgid "Target Campaign:"
+msgstr "Kampania:"
+
+#: .././getresponse-integration.php:549 .././getresponse-integration.php:607
+#: .././getresponse-integration.php:668 .././getresponse-integration.php:736
+msgid "Additional text:"
+msgstr "Dodatkowy tekst:"
+
+#: .././getresponse-integration.php:551 .././getresponse-integration.php:609
+#: .././getresponse-integration.php:671 .././getresponse-integration.php:738
+msgid "Sign up to our newsletter!"
+msgstr "Zapisz się do naszego newslettera!"
+
+#: .././getresponse-integration.php:557 .././getresponse-integration.php:615
+#: .././getresponse-integration.php:677
+msgid "Subscribe checkbox checked by default"
+msgstr "Zapisanie do kampanii zaznaczone domyślnie"
+
+#: .././getresponse-integration.php:578
+msgid "Subscribe via Registration Page"
+msgstr "Zapis na stronie rejestracji"
+
+#: .././getresponse-integration.php:583 .././getresponse-integration.php:643
+msgid "Registration integration:"
+msgstr "Integracja z formularzem zapisu"
+
+#: .././getresponse-integration.php:589
+msgid "(allow subscriptions at the registration page)"
+msgstr "(pozwala na zapis na stronie rejestracji)"
+
+#: .././getresponse-integration.php:638
+msgid "Subscribe via BuddyPress Registration Page"
+msgstr "Subskrypcja za pomocą Formularza Zapisu BuddyPress"
+
+#: .././getresponse-integration.php:650
+msgid "(allow subscriptions at the BuddyPress registration page)"
+msgstr "(pozwala na zapis na stronie rejestracji BuddyPress)"
+
+#: .././getresponse-integration.php:705
+msgid "Subscribe via Checkout Page (WooCommerce)"
+msgstr "Zapis na stronie z płatnościami (WooCommerce)"
+
+#: .././getresponse-integration.php:710
+msgid "Checkout integration:"
+msgstr "Integracja ze stroną płatności"
+
+#: .././getresponse-integration.php:716
+msgid "(allow subscriptions at the checkout stage)"
+msgstr "(pozwala na zapis na stronie płatności)"
+
+#: .././getresponse-integration.php:726
+msgid "Target campaign:"
+msgstr "Kampania:"
+
+#: .././getresponse-integration.php:744
+msgid "Sign up box checked by default"
+msgstr "Formularz zapisu zaznaczony domyślnie"
+
+#: .././getresponse-integration.php:753
+msgid "Map custom fields:"
+msgstr "Zmapuj pola:"
+
+#: .././getresponse-integration.php:762
+msgid ""
+"Check to update customer details. Each input can be max. 32 characters and "
+"include lowercase, a-z letters, digits or underscores. Incorrect or empty "
+"entries won’t be added."
+msgstr ""
+"Sprawdź zaktualizowane dane klientów. Każdy element może zawierać do 32 "
+"znaków i składać się z małych liter a-z, liczb lub podkreśleń. Niepoprawne "
+"lub puste wpisy nie będą dodane."
+
+#: .././getresponse-integration.php:816
+msgid "Web Form Shortcode"
+msgstr "Kod Formularza Zapisu"
+
+#: .././getresponse-integration.php:818
+msgid ""
+"With the GetResponse Wordpress plugin, you can use shortcodes to place web "
+"forms in blog posts. Simply place the following tag in your post wherever "
+"you want the web form to appear:"
+msgstr ""
+"Dzięki wtyczce GetResponse WordPress możesz użyć krótkiej wersji kodu, aby "
+"umieścić formularz zapisu na blogu. Wystarczy umieścić następujący tag w "
+"pości, w którym ma pojawić się formularz zapisu:"
+
+#: .././getresponse-integration.php:823
+msgid "Allowed attributes:"
+msgstr "Dozwolone atrybuty:"
+
+#: .././getresponse-integration.php:826
+msgid ""
+"Set this parameter to ON, and the form will be displayed in a GetResponse "
+"format; set it to OFF, and the form will be displayed in a standard "
+"Wordpress format. Allowed only for old forms."
+msgstr ""
+"Włączenie tej funkcji spowoduje wyświetlenie formularza w formacie zapisanym "
+"przez GetResponse. Gdy ją wyłączysz, formularz pozostanie w standardowym "
+"formacie Wordpress. Funkcja dostępna jedynie dla starej wersji formularzy."
+
+#: .././getresponse-integration.php:829
+msgid ""
+"Set this parameter to ON, and the form will be centralized; set it to OFF, "
+"and the form will be displayed in the standard left side without margin."
+msgstr ""
+"Włączenie tej funkcji spowoduje wypośrodkowanie formularza. Jej wyłączenie "
+"generuje wyświetlenie formularza po lewej stronie strony bez zastosowania "
+"marginesu."
+
+#: .././getresponse-integration.php:832
+msgid ""
+"Set this parameter to customize margin (element width) [Default is 200px] "
+msgstr ""
+"Włączenie tej funkcji pozwoli na dopasowanie szerokości marginesu "
+"[Ustawienia domyślne to 200px]."
+
+#: .././getresponse-integration.php:835
+msgid ""
+"Set this parameter to customize form variant, allowed values: A-H. Variants "
+"can be set in your GetResponse panel. Allowed only for the new forms."
+msgstr ""
+"Ustaw tę funkcję by dopasować warianty testów A/B do własnych potrzeb; "
+"możliwe wartości: A-H. Ustawień wariantów można dokonać w panelu "
+"GetResponse. Funkcja dostępna jedynie dla nowych formularzy."
+
+#: .././getresponse-integration.php:842
+msgid "Having problems with the plugin?"
+msgstr "Masz problem z wtyczką?"
+
+#: .././getresponse-integration.php:843
+msgid ""
+"You can drop us a line including the following details and we'll do what we "
+"can. "
+msgstr ""
+"Prześlij do nas pytanie załączając poniższe informacje, z nimi szybciej "
+"rozwiążemy Twój problem."
+
+#: .././getresponse-integration.php:1219 .././getresponse-integration.php:1238
+msgid "No rss items, feed might be broken."
+msgstr "Brak elementów rss, kanał może być uszkodzony."
+
+#: .././getresponse-integration.php:1319
+#: .././lib/class-gr-widget-webform.php:95
+msgid "New Forms"
+msgstr "Nowe Formularze"
+
+#: .././getresponse-integration.php:1320
+#: .././lib/class-gr-widget-webform.php:96
+msgid "Old Web Forms"
+msgstr "Stare Formularze"
+
+#: .././getresponse-integration.php:1321
+msgid "No Forms"
+msgstr "Brak formularzy"
+
+#: .././getresponse-integration.php:1322
+msgid "No Web Forms"
+msgstr "Brak formularzy"
+
+#: .././getresponse-integration.php:1359
+msgid "cURL Error !"
+msgstr "Błąd cURL !"
+
+#: .././getresponse-integration.php:1360
+msgid "GetResponse Integration Plugin requires PHP cURL extension"
+msgstr "Wtyczka GetResponse Integration wymaga włączonego modułu cURL dla PHP"
+
+#: .././getresponse-integration.php:1511
+msgid "No Campaigns."
+msgstr "Brak kampanii"
+
+#: .././lib/class-gr-widget-webform.php:18
+msgid "GetResponse Web Form"
+msgstr "Formularz Zapisu GetResponse"
+
+#: .././lib/class-gr-widget-webform.php:19
+msgid "Dispaly a GetResponse Web Form on your site."
+msgstr "Wyświetl Formularz Zapisu GetResponse na Twojej stronie"
+
+#: .././lib/class-gr-widget-webform.php:93
+msgid "Web Form:"
+msgstr "Formularz Zapisu:"
+
+#: .././lib/class-gr-widget-webform.php:103
+msgid "Variant:"
+msgstr "Wariant:"
+
+#: .././lib/class-gr-widget-webform.php:112
+msgid "Use Wordpress CSS styles (Old Web Forms)"
+msgstr "Użyj styli CSS Wordpressa (Stare Formularze)"
+
+#: .././lib/class-gr-widget-webform.php:116
+msgid "Center Webform"
+msgstr "Wyśrodkuj Webform"
+
+#: .././lib/class-gr-widget-webform.php:118
+msgid "Margin:"
+msgstr "Margines"
+
+#: .././lib/class-gr-widget-webform.php:333
+msgid "API key is not set."
+msgstr "Klucz API nie jest ustawiony."
