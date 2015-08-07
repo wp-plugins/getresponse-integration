@@ -4,9 +4,11 @@
  * Plugin Name: GetResponse Integration Plugin
  * Plugin URI: http://wordpress.org/extend/plugins/getresponse-integration/
  * Description: This plug-in enables installation of a GetResponse fully customizable sign up form on your WordPress site or blog. Once a web form is created and added to the site the visitors are automatically added to your GetResponse contact list and sent a confirmation email. The plug-in additionally offers sign-up upon leaving a comment.
- * Version: 3.0
- * Author: GetResponse Author: Grzegorz Struczynski
- * Author URI: http://getresponse.com/ License: GPL2
+ * Version: 3.0.1
+ * Author: GetResponse
+ * Author URI: http://getresponse.com/
+ * Author: Grzegorz Struczynski
+ * License: GPL2
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as
@@ -160,6 +162,8 @@ class Gr_Integration
 	{
 		add_action('wp_ajax_gr-traceroute-submit', array($this, 'gr_traceroute_ajax_request'));
 		add_action('wp_ajax_gr-variants-submit', array($this, 'gr_variants_ajax_request'));
+		add_action('wp_ajax_gr-forms-submit', array($this, 'gr_forms_ajax_request'));
+		add_action('wp_ajax_gr-webforms-submit', array($this, 'gr_webforms_ajax_request'));
 	}
 
 	/**
@@ -207,7 +211,7 @@ class Gr_Integration
 		{
 			$response = __('An error occurred while trying to traceroute: ', 'Gr_Integration') . join("\n", $out);
 		}
-		if ( ! empty($out))
+		if ( !empty($out))
 		{
 			foreach ($out as $line)
 			{
@@ -238,6 +242,30 @@ class Gr_Integration
 	}
 
 	/**
+	 * Ajax method get variants result
+	 */
+	function gr_forms_ajax_request()
+	{
+		$forms = $this->grApiInstance->getForms(array('sort' => array('name' => 'asc')));
+		$response = json_encode(array('success' => $forms));
+		header("Content-Type: application/json");
+		echo $response;
+		exit;
+	}
+
+	/**
+	 * Ajax method get variants result
+	 */
+	function gr_webforms_ajax_request()
+	{
+		$forms = $this->grApiInstance->getWebforms(array('sort' => array('name' => 'asc')));
+		$response = json_encode(array('success' => $forms));
+		header("Content-Type: application/json");
+		echo $response;
+		exit;
+	}
+
+	/**
 	 * Admin page settings
 	 */
 	function AdminOptionsPage()
@@ -261,8 +289,8 @@ class Gr_Integration
 					<table class="wp-list-table widefat">
 						<thead>
 						<tr>
-							<th><span
-									class="GR_header"><?php _e('GetResponse Plugin - API Error', 'Gr_Integration'); ?></span>
+							<th>
+								<span class="GR_header"><?php _e('GetResponse Plugin - API Error', 'Gr_Integration'); ?></span>
 							</th>
 						</tr>
 						</thead>
@@ -421,6 +449,15 @@ class Gr_Integration
 				</tr>
 				</thead>
 				<tbody id="the-list">
+
+				<tr>
+					<td>
+						<span style="margin-top: 0px; color: #b81c23;">
+							<?php _e('The new GetResponse Forms are now available! Enjoy a new era of growing your list, but be patient if any issues with the WordPress Plugin may occur during the BETA phase. We’re polishing it as we speak!'); ?>
+						</span>
+					</td>
+				</tr>
+
 				<tr class="active" id="">
 					<td class="desc">
 						<form method="post"
@@ -501,8 +538,8 @@ class Gr_Integration
 										<label class="GR_label"
 										       for="comment_campaign"><?php _e('Target Campaign:', 'Gr_Integration'); ?></label>
 										<?php
-											// check if no errors
-											$this->returnCampaignSelector($campaigns, $comment_campaign, 'comment_campaign');
+										// check if no errors
+										$this->returnCampaignSelector($campaigns, $comment_campaign, 'comment_campaign');
 										?>
 									</p>
 
@@ -560,7 +597,7 @@ class Gr_Integration
 										<label class="GR_label"
 										       for="registration_campaign"><?php _e('Target Campaign:', 'Gr_Integration'); ?></label>
 										<?php
-											$this->returnCampaignSelector($campaigns, $registration_campaign, 'registration_campaign');
+										$this->returnCampaignSelector($campaigns, $registration_campaign, 'registration_campaign');
 										?>
 									</p>
 
@@ -621,7 +658,7 @@ class Gr_Integration
 											<label class="GR_label"
 											       for="bp_registration_campaign"><?php _e('Target Campaign:', 'Gr_Integration'); ?></label>
 											<?php
-												$this->returnCampaignSelector($campaigns, $bp_registration_campaign, 'bp_registration_campaign');
+											$this->returnCampaignSelector($campaigns, $bp_registration_campaign, 'bp_registration_campaign');
 											?>
 										</p>
 
@@ -689,7 +726,7 @@ class Gr_Integration
 											       for="checkout_campaign"><?php _e('Target campaign:', 'Gr_Integration'); ?></label>
 
 											<?php
-												$this->returnCampaignSelector($campaigns, $checkout_campaign, 'checkout_campaign');
+											$this->returnCampaignSelector($campaigns, $checkout_campaign, 'checkout_campaign');
 											?>
 										</p>
 
@@ -786,16 +823,16 @@ class Gr_Integration
 									<b><?php _e('Allowed attributes:', 'Gr_Integration'); ?></b>
 									<br/>
 									<code>CSS</code>
-									- <?php _e('Set this parameter to ON, and the web form will be displayed in GetResponse format; set it to OFF, and the web form will be displayed in the standard Wordpress format. Allowed only for Old Webforms.', 'Gr_Integration'); ?>
+									- <?php _e('Set this parameter to ON, and the form will be displayed in a GetResponse format; set it to OFF, and the form will be displayed in a standard Wordpress format. Allowed only for old forms.', 'Gr_Integration'); ?>
 									<br/>
 									<code>CENTER</code>
-									- <?php _e('Set this parameter to ON, and the web form will be centralized; set it to OFF, and the web form will be displayed in the standard left side without margin.', 'Gr_Integration'); ?>
+									- <?php _e('Set this parameter to ON, and the form will be centralized; set it to OFF, and the form will be displayed in the standard left side without margin.', 'Gr_Integration'); ?>
 									<br/>
 									<code>CENTER_MARGIN</code>
 									- <?php _e('Set this parameter to customize margin (element width) [Default is 200px] ', 'Gr_Integration'); ?>
 									<br/>
 									<code>VARIANT</code>
-									- <?php _e('Set this parameter to customize Web Form variant, allowed values: A-H. Variants can be set on your GetResponse panel.', 'Gr_Integration'); ?>
+									- <?php _e('Set this parameter to customize form variant, allowed values: A-H. Variants can be set in your GetResponse panel. Allowed only for the new forms.', 'Gr_Integration'); ?>
 								</p>
 
 								<div class="GR_img_webform_shortcode"></div>
@@ -1233,11 +1270,11 @@ class Gr_Integration
 
 		if ($wp_version >= 3.9)
 		{
-			$plugin_array['GrShortcodes'] = untrailingslashit(plugins_url('/', __FILE__)) . '/js/gr-plugin.js';
+			$plugin_array['GrShortcodes'] = untrailingslashit(plugins_url('/', __FILE__)) . '/js/gr-plugin.js?v301';
 		}
 		else
 		{
-			$plugin_array['GrShortcodes'] = untrailingslashit(plugins_url('/', __FILE__)) . '/js/gr-plugin_3_8.js';
+			$plugin_array['GrShortcodes'] = untrailingslashit(plugins_url('/', __FILE__)) . '/js/gr-plugin_3_8.js?v301';
 		}
 
 		return $plugin_array;
@@ -1267,32 +1304,22 @@ class Gr_Integration
 
 		$webforms  = null;
 		$forms     = null;
-		$campaigns = null;
-		if ( ! empty($api_key))
+		if ( !empty($api_key))
 		{
 			$api     = new GetResponseIntegration($api_key);
-			$results = $api->getCampaigns();
-			if ( ! empty($results))
-			{
-				foreach ($results as $result)
-				{
-					$campaigns[$result->campaignId] = $result;
-				}
-			}
 			$webforms = $api->getWebforms(array('sort' => array('name' => 'asc')));
 			$forms    = $api->getForms(array('sort' => array('name' => 'asc')));
 		}
-		$my_campaigns = json_encode($campaigns);
-		$my_webforms  = json_encode($webforms);
-		$my_forms     = json_encode($forms);
+		$webforms  = json_encode($webforms);
+		$forms     = json_encode($forms);
 		?>
 		<script type="text/javascript">
-			var my_webforms = <?php echo $my_webforms; ?>;
-			var my_forms = <?php echo $my_forms; ?>;
-			var my_campaigns = <?php echo $my_campaigns; ?>;
-			var text_new_webfoms = '<?php echo __('New Web forms: ', 'Gr_Integration'); ?>';
-			var text_old_webfoms = '<?php echo __('Old Web forms: ', 'Gr_Integration'); ?>';
-			var text_no_webfoms = '<?php echo __('No web forms', 'Gr_Integration'); ?>';
+			var my_webforms = <?php echo $webforms; ?>;
+			var my_forms = <?php echo $forms; ?>;
+			var text_forms = '<?php echo __('New Forms', 'Gr_Integration'); ?>';
+			var text_webforms = '<?php echo __('Old Web Forms', 'Gr_Integration'); ?>';
+			var text_no_forms = '<?php echo __('No Forms', 'Gr_Integration'); ?>';
+			var text_no_webforms = '<?php echo __('No Web Forms', 'Gr_Integration'); ?>';
 		</script>
 		<?php
 	}
